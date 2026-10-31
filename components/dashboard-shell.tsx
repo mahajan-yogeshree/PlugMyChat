@@ -51,7 +51,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       <header className="border-b">
         <div className="page-wrap flex h-16 items-center justify-between gap-4">
           <Link href="/" className="font-display text-lg">
-            chatwith.
+            PlugMyChat
           </Link>
           <nav className="flex gap-1 overflow-x-auto">
             {links.map(([href, label]) => (

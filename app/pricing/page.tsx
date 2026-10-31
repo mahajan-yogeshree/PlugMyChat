@@ -10,7 +10,7 @@ export default function PricingPage() {
     <MarketingShell>
       <h1>Predictable pricing.</h1>
       <p className="mt-3 max-w-2xl text-muted-foreground">
-        Monthly prices match the public Chatwith list. Annual billing is ten months paid once. Changing a plan here only updates this local workspace.
+        Monthly prices are listed below. Annual billing is ten months paid once. Changing a plan here only updates this local workspace.
       </p>
       <div className="mt-8">
         <PlanTable />

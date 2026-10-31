@@ -22,7 +22,7 @@ export async function readPublicPage(raw: string) {
   const response = await fetch(url, {
     redirect: "manual",
     signal: AbortSignal.timeout(8000),
-    headers: { "user-agent": "ChatwithRebuild/1.0" },
+    headers: { "user-agent": "PlugMyChat/1.0" },
   });
   if (response.status >= 300 && response.status < 400) {
     throw new Error("Redirects are not followed.");

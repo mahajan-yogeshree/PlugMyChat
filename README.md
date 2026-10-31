@@ -1,6 +1,6 @@
-# Chatwith, rebuilt locally
+# PlugMyChat
 
-A local reconstruction of the public product at [chatwith.tools](https://chatwith.tools/). REA inspected the live site through Chrome DevTools (page structure, routes, and the published plan list). This app implements that product on one machine:
+PlugMyChat is a local customer-support agent. It was rebuilt from the public behavior at [chatwith.tools](https://chatwith.tools/), after REA inspected that site through Chrome DevTools (page structure, routes, and the published plan list). This app runs on one machine:
 
 - Marketing pages for home, pricing, integrations, use cases, agencies, help, installation, and a short blog
 - Email sign-in that creates an account when the address is new
@@ -9,7 +9,7 @@ A local reconstruction of the public product at [chatwith.tools](https://chatwit
 - Lead capture when a visitor types an email
 - The published plan ladder (Starter $9, Hobby $19, Standard $99, Business $399), applied only inside this workspace
 
-Answers are chosen from the sources you stored. They are not sent to Chatwith or to a hosted model. Google sign-in, card checkout, and messaging apps (Slack, WhatsApp, Telegram) are shown as part of the product map and are not connected.
+Answers are chosen from the sources you stored. They are not sent to a hosted model. Google sign-in, card checkout, and messaging apps (Slack, WhatsApp, Telegram) are shown as part of the product map and are not connected.
 
 ## Run it
 

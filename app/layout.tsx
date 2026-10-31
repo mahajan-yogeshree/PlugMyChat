@@ -22,8 +22,8 @@ const mono = DM_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AI customer support for your website",
-  description: "Train an agent on your pages and files, answer customers, and keep the leads.",
+  title: "PlugMyChat",
+  description: "PlugMyChat trains an agent on your pages and files, answers customers, and keeps the leads.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

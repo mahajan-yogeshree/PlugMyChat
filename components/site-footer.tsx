@@ -36,7 +36,8 @@ export function SiteFooter() {
   return (
     <footer className="border-t">
       <div className="page-wrap py-16">
-        <p className="max-w-[18ch] font-display text-section leading-none">
+        <p className="font-display text-lg">PlugMyChat</p>
+        <p className="mt-4 max-w-[18ch] font-display text-section leading-none">
           Answers come from the pages you give it.
         </p>
         <p className="mt-4 max-w-xl text-sm text-muted-foreground">

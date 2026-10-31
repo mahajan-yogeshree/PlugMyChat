@@ -20,7 +20,7 @@ export function SiteHeader() {
     <header className="site-nav">
       <div className="site-nav-pill">
         <Link href="/" className="font-display text-lg">
-          chatwith.
+          PlugMyChat
         </Link>
         <nav className="hidden items-center gap-5 text-sm md:flex">
           {links.map((link) => (

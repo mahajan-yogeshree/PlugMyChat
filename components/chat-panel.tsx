@@ -132,7 +132,7 @@ export function ChatPanel({
         </Button>
       </form>
       {agent?.showBadge ? (
-        <p className="border-t px-3 py-2 text-center text-[11px] text-muted-foreground">Powered by chatwith.</p>
+        <p className="border-t px-3 py-2 text-center text-[11px] text-muted-foreground">Powered by PlugMyChat</p>
       ) : null}
     </div>
   );

@@ -41,7 +41,7 @@ export default function SignInPage() {
     <div className="grid min-h-screen md:grid-cols-2">
       <div className="flex flex-col justify-center px-6 py-12">
         <Link href="/" className="font-display text-lg">
-          chatwith.
+          PlugMyChat
         </Link>
         <h1 className="mt-8 text-3xl font-semibold">Sign in</h1>
         <p className="mt-2 text-sm text-muted-foreground">New here? The same email creates your account.</p>
