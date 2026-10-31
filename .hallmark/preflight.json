@@ -1,0 +1,27 @@
+{
+  "scanned": "2026-10-31",
+  "findings": {
+    "fonts": "Geist + Geist Mono (next/font/google, app/layout.tsx)",
+    "palette": "OKLCH custom properties, indigo primary oklch(0.51 0.2 277) (app/globals.css :root). Framework default, not a locked brand.",
+    "motion": "tw-animate-css (package.json). No framer-motion.",
+    "spacing": "Tailwind v4 default scale via @import tailwindcss. No tailwind.config spacing extend.",
+    "framework": "Next.js 15.5.28 app router, React 19, Tailwind v4, shadcn 4 / base-ui. Dev server port 43123."
+  },
+  "preserve": [
+    "routes and wiring",
+    "plans and prices already on the pages",
+    "local answer, auth, sources, leads, widget"
+  ],
+  "introduce": [
+    "theme chosen by the user from the dealt set",
+    "shape, gates, hero discipline, tokens"
+  ],
+  "genre": "modern-minimal (SaaS, B2B). Atmospheric also fires because the product is an AI tool; the deal used modern-minimal and the other genre is an either-or.",
+  "deal": {
+    "seed": "local-customer-support-agent-5db3·fd273830·2026-10-31·r0",
+    "themes": ["coral", "console", "dose"]
+  },
+  "designMd": false,
+  "brandSpec": false,
+  "togetherApiKey": false
+}
