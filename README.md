@@ -14,7 +14,7 @@ rea doctor --client cursor --skill
 rea decompile /absolute/path/to/binary --procedure main --provider ghidra --json
 ```
 
-The same script is in `scripts/rea-env.sh`. Cursor is already registered. Its MCP entry is `~/.cursor/mcp.json`, mirrored by `.cursor/mcp.json`. The server advertises the full catalog: **229 tools** and **6 prompts**. No tool family is filtered out. Restart Cursor after this registration so the live session reloads MCP.
+The same script is in `scripts/rea-env.sh`. It exports `ENABLE_TOOL_SEARCH=true`, so agent sessions that load this environment defer MCP tool definitions and search for them instead of sending the full catalog on every call. The same value is in `.claude/settings.json` and in the REA MCP `env`. Cursor is already registered. Its MCP entry is `~/.cursor/mcp.json`, mirrored by `.cursor/mcp.json`. The server advertises the full catalog: **229 tools** and **6 prompts**. No tool family is filtered out. Restart Cursor after this registration so the live session reloads MCP.
 
 The investigation workflow is installed at `~/.agents/skills/reverse-engineer-anything` and copied in this repo under `.agents/skills/reverse-engineer-anything`.
 

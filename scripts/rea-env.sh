@@ -11,3 +11,5 @@ export REA_OBJDUMP_COMMAND=/usr/bin/objdump
 export REA_GDB_COMMAND=/usr/bin/gdb
 export REA_RIZIN_COMMAND=/usr/local/bin/rizin
 export REA_APKTOOL_COMMAND=/usr/bin/apktool
+
+export ENABLE_TOOL_SEARCH=true
