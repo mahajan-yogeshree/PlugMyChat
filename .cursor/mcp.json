@@ -1,0 +1,25 @@
+{
+  "mcpServers": {
+    "rea": {
+      "command": "/home/ubuntu/.local/bin/rea",
+      "args": [
+        "mcp"
+      ],
+      "env": {
+        "GHIDRA_INSTALL_DIR": "/opt/ghidra",
+        "HOPPER_LAUNCHER_PATH": "/opt/hopper/bin/Hopper",
+        "JAVA_HOME": "/usr/lib/jvm/java-21-openjdk-amd64",
+        "REA_JADX_MCP_JAR": "/home/ubuntu/.local/share/rea/android/jadx-headless-mcp-0.7.1-all.jar",
+        "REA_KUNA_COMMAND": "/opt/kuna/kuna-v1.833-linux-x86_64/kuna",
+        "REA_WABT_BIN_DIRECTORY": "/opt/wabt/bin",
+        "REA_BINWALK_COMMAND": "/opt/binwalk/bin/binwalk",
+        "REA_UNBLOB_COMMAND": "/home/ubuntu/.local/rea-python/bin/unblob",
+        "REA_OBJDUMP_COMMAND": "/usr/bin/objdump",
+        "REA_GDB_COMMAND": "/usr/bin/gdb",
+        "REA_RIZIN_COMMAND": "/usr/local/bin/rizin",
+        "REA_APKTOOL_COMMAND": "/usr/bin/apktool",
+        "PATH": "/home/ubuntu/.nvm/versions/node/v22.23.4/bin:/home/ubuntu/.local/bin:/opt/wabt/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+      }
+    }
+  }
+}
