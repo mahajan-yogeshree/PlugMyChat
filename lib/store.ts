@@ -44,7 +44,7 @@ function seed(): Database {
     userId: user.id,
     name: "Northwind Desk",
     welcome: "Ask about shipping, returns, or a product. I answer from Northwind's notes.",
-    accent: "#4f46e5",
+    accent: "#1f7a4d",
     instructions: "Be brief. If the notes do not contain the answer, say so and offer to take an email.",
     collectLeads: true,
     createdAt: now,

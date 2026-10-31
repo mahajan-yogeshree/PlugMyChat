@@ -47,40 +47,42 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen md:grid md:grid-cols-[220px_1fr]">
-      <aside className="border-b bg-card md:border-r md:border-b-0">
-        <div className="flex items-center justify-between px-4 py-4 md:block">
-          <Link href="/" className="text-lg font-semibold">
-            chatwith<span className="text-primary">.</span>
+    <div className="min-h-screen">
+      <header className="border-b">
+        <div className="page-wrap flex h-16 items-center justify-between gap-4">
+          <Link href="/" className="font-display text-lg">
+            chatwith.
           </Link>
-          <Button variant="ghost" size="sm" className="md:mt-4" onClick={signOut}>
+          <nav className="flex gap-1 overflow-x-auto">
+            {links.map(([href, label]) => (
+              <Link
+                key={href}
+                href={href}
+                className={`rounded-[10px] px-3 py-2 text-sm ${pathname === href ? "bg-signal-soft font-medium" : "text-muted-foreground"}`}
+              >
+                {label}
+              </Link>
+            ))}
+          </nav>
+          <Button variant="ghost" size="sm" onClick={signOut}>
             Sign out
           </Button>
         </div>
-        <nav className="flex gap-1 overflow-x-auto px-2 pb-3 md:flex-col md:px-3">
-          {links.map(([href, label]) => (
-            <Link
-              key={href}
-              href={href}
-              className={`rounded-lg px-3 py-2 text-sm ${pathname === href ? "bg-muted font-medium" : "text-muted-foreground"}`}
-            >
-              {label}
-            </Link>
-          ))}
-        </nav>
-      </aside>
-      <div>
-        <div className="flex items-center justify-between border-b px-4 py-3 text-sm">
+        <div className="page-wrap flex flex-wrap gap-x-4 gap-y-1 border-t py-2 text-sm">
           {me ? (
-            <p>
-              {me.user.email} · {me.usage.plan.name} · {me.usage.creditsUsed}/{me.usage.plan.credits} credits
-            </p>
+            <>
+              <span>{me.user.email}</span>
+              <span>{me.usage.plan.name}</span>
+              <span className="dose">
+                {me.usage.creditsUsed}/{me.usage.plan.credits} credits
+              </span>
+            </>
           ) : (
             <p className="text-muted-foreground">{error || "Loading workspace…"}</p>
           )}
         </div>
-        <div className="px-4 py-6">{children}</div>
-      </div>
+      </header>
+      <div className="page-wrap py-8">{children}</div>
     </div>
   );
 }

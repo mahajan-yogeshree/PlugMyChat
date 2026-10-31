@@ -45,7 +45,7 @@ export default function BillingPage() {
         {plans.map((plan) => (
           <article key={plan.id} className="rounded-2xl border bg-card p-4">
             <h2 className="font-semibold">{plan.name}</h2>
-            <p className="text-sm text-muted-foreground">${plan.monthly}/month · {plan.credits} credits · {plan.agents} agents</p>
+            <p className="text-sm text-muted-foreground">${plan.monthly} a month, {plan.credits} credits, {plan.agents} agents</p>
             <Button className="mt-3" variant={current === plan.id ? "secondary" : "default"} onClick={() => choose(plan.id)} disabled={current === plan.id}>
               {current === plan.id ? "Current" : "Use this plan"}
             </Button>

@@ -40,8 +40,8 @@ export default function SignInPage() {
   return (
     <div className="grid min-h-screen md:grid-cols-2">
       <div className="flex flex-col justify-center px-6 py-12">
-        <Link href="/" className="text-lg font-semibold">
-          chatwith<span className="text-primary">.</span>
+        <Link href="/" className="font-display text-lg">
+          chatwith.
         </Link>
         <h1 className="mt-8 text-3xl font-semibold">Sign in</h1>
         <p className="mt-2 text-sm text-muted-foreground">New here? The same email creates your account.</p>
@@ -72,10 +72,10 @@ export default function SignInPage() {
           Try the sample workspace with demo@northwind.example and harbor-demo. By continuing you agree to the local <Link href="/terms" className="underline">terms</Link> and <Link href="/privacy" className="underline">privacy</Link> notes.
         </p>
       </div>
-      <div className="hidden items-center bg-primary px-10 text-primary-foreground md:flex">
-        <blockquote className="max-w-md text-2xl font-medium leading-snug">
+      <div className="band-ink hidden items-center px-10 md:flex">
+        <p className="max-w-md">
           The useful part is not another chat window. It is an answer that came from the page you already wrote.
-        </blockquote>
+        </p>
       </div>
     </div>
   );

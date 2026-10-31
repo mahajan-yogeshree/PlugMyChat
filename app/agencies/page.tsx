@@ -44,8 +44,7 @@ export default function AgenciesPage() {
       <SiteHeader />
       <main className="mx-auto grid max-w-6xl gap-10 px-4 py-12 md:grid-cols-2">
         <div>
-          <p className="text-sm font-medium text-primary">For agencies</p>
-          <h1 className="mt-2 text-4xl font-semibold tracking-tight">Resell support agents. Keep the relationship.</h1>
+          <h1>Resell support agents. Keep the relationship.</h1>
           <p className="mt-4 text-muted-foreground">
             You sell the package and the brand. The agent runs on the client site. Partner rates on the public product are discussed in a demo; an example they publish is a $69 cost against a $149–199 client price.
           </p>

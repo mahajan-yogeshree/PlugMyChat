@@ -1,0 +1,32 @@
+[
+ {
+  "mode": "redesign",
+  "depth": "full",
+  "scope": "site",
+  "shape": "Feature Stack",
+  "theme": "Dose",
+  "axes": "light/grotesk-sans/chromatic-green",
+  "hero": "Corridor",
+  "nav": "floating pill",
+  "footer": "statement",
+  "imagery": "the product",
+  "photos": [],
+  "entry": "a cited shipping answer on a pharmacy label",
+  "fingerprint": "dose-corridor-label",
+  "sections": [
+   "Hero",
+   "Pricing table",
+   "Feature stack",
+   "Use cases",
+   "Integrations",
+   "Questions",
+   "Sample desk",
+   "Install",
+   "Footer"
+  ],
+  "signature": "a cited answer on a pharmacy label",
+  "waived": [],
+  "prompt": "local customer support agent trained on a business pages",
+  "date": "2026-10-31"
+ }
+]

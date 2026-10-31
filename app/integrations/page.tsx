@@ -8,8 +8,7 @@ import { cn } from "cn";
 export default function IntegrationsPage() {
   return (
     <MarketingShell>
-      <p className="text-sm font-medium text-primary">Integrations</p>
-      <h1 className="mt-2 max-w-2xl text-4xl font-semibold tracking-tight">Works where your customers already are.</h1>
+      <h1>Works where your customers already are.</h1>
       <p className="mt-3 max-w-2xl text-muted-foreground">
         Put the agent on the site first. The channels below are the same map the public product publishes. On this rebuild, website chat, lead capture, and source training are the parts that run.
       </p>

@@ -30,7 +30,7 @@ export async function POST(request: Request) {
         userId: user.id,
         name,
         welcome: `Hi, I'm ${name}. Ask me about this business.`,
-        accent: "#4f46e5",
+        accent: "#1f7a4d",
         instructions: "Answer only from the sources. If you are unsure, ask for an email.",
         collectLeads: true,
         sources: [],

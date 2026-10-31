@@ -19,9 +19,11 @@ type Bubble = { role: "user" | "assistant"; content: string };
 export function ChatPanel({
   agentId,
   className = "",
+  sample = false,
 }: {
   agentId: string;
   className?: string;
+  sample?: boolean;
 }) {
   const [agent, setAgent] = useState<PublicAgent | null>(null);
   const [error, setError] = useState("");
@@ -39,7 +41,19 @@ export function ChatPanel({
         if (!response.ok) throw new Error(body.error || "Agent unavailable.");
         if (!cancelled) {
           setAgent(body.agent);
-          setMessages([{ role: "assistant", content: body.agent.welcome }]);
+          const welcome = { role: "assistant" as const, content: body.agent.welcome };
+          setMessages(
+            sample
+              ? [
+                  welcome,
+                  { role: "user", content: "Where is order 4471?" },
+                  {
+                    role: "assistant",
+                    content: "Order 4471 shipped this morning with UPS and should arrive Thursday. Orders placed before 2pm ship the same weekday.\n\nFrom Shipping.",
+                  },
+                ]
+              : [welcome],
+          );
         }
       })
       .catch((reason: Error) => {
@@ -51,7 +65,7 @@ export function ChatPanel({
     return () => {
       cancelled = true;
     };
-  }, [agentId]);
+  }, [agentId, sample]);
 
   async function send(event: React.FormEvent) {
     event.preventDefault();
@@ -79,23 +93,25 @@ export function ChatPanel({
   }
 
   return (
-    <div className={cn("flex h-[520px] flex-col overflow-hidden rounded-2xl border bg-card shadow-xl", className)}>
-      <div
-        className="flex items-center justify-between px-4 py-3 text-primary-foreground"
-        style={{ background: agent?.accent || "#4f46e5" }}
-      >
+    <div className={cn("flex h-[520px] flex-col overflow-hidden rounded-[14px] border bg-card shadow-lift", className)}>
+      <div className="flex items-center justify-between border-b px-4 py-3">
         <div>
-          <p className="text-sm font-semibold">{agent?.name || "Agent"}</p>
-          <p className="text-xs opacity-80">{busy ? "Looking through sources…" : "Usually replies in under a second"}</p>
+          <p className="text-sm font-medium">{agent?.name || "Agent"}</p>
+          <p className="dose text-xs text-muted-foreground">{busy ? "Looking through sources…" : "Usually replies in under a second"}</p>
         </div>
+        {agent?.accent ? (
+          <span className="dose rounded-[6px] border px-2 py-1 text-xs" style={{ background: agent.accent, color: "var(--color-paper)" }}>
+            Accent
+          </span>
+        ) : null}
       </div>
       <div className="flex-1 space-y-3 overflow-y-auto bg-muted/40 p-4">
         {loading ? <p className="text-sm text-muted-foreground">Opening the agent…</p> : null}
         {messages.map((message, index) => (
           <div
             key={`${message.role}-${index}`}
-            className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm whitespace-pre-wrap ${
-              message.role === "user" ? "ml-auto bg-foreground text-background" : "bg-card"
+            className={`max-w-[85%] px-3 py-2 text-sm whitespace-pre-wrap ${
+              message.role === "user" ? "ml-auto bg-ink text-paper" : "border-l border-rule"
             }`}
           >
             {message.content}

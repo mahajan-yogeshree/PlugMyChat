@@ -42,3 +42,7 @@ next-env.d.ts
 
 # local workspace data for the rebuilt product
 /data
+
+# Hallmark render captures
+.hallmark/shots/
+.hallmark/before/

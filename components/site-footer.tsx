@@ -34,30 +34,30 @@ const columns = [
 
 export function SiteFooter() {
   return (
-    <footer className="border-t bg-card">
-      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:grid-cols-2 md:grid-cols-4">
-        <div>
-          <p className="text-lg font-semibold">
-            chatwith<span className="text-primary">.</span>
-          </p>
-          <p className="mt-2 text-sm text-muted-foreground">
-            AI customer support trained on your business. This copy runs locally and answers only from sources stored on this machine.
-          </p>
+    <footer className="border-t">
+      <div className="page-wrap py-16">
+        <p className="max-w-[18ch] font-display text-section leading-none">
+          Answers come from the pages you give it.
+        </p>
+        <p className="mt-4 max-w-xl text-sm text-muted-foreground">
+          AI customer support trained on your business. This copy runs locally and answers only from sources stored on this machine.
+        </p>
+        <div className="mt-10 grid gap-8 sm:grid-cols-3">
+          {columns.map((column) => (
+            <div key={column.title}>
+              <p className="text-sm font-medium">{column.title}</p>
+              <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+                {column.links.map(([label, href]) => (
+                  <li key={href}>
+                    <Link href={href} className="hover:underline">
+                      {label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
-        {columns.map((column) => (
-          <div key={column.title}>
-            <p className="text-sm font-medium">{column.title}</p>
-            <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-              {column.links.map(([label, href]) => (
-                <li key={href}>
-                  <Link href={href} className="hover:text-foreground">
-                    {label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
       </div>
     </footer>
   );
