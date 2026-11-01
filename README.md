@@ -23,3 +23,8 @@ Open [http://127.0.0.1:43123](http://127.0.0.1:43123).
 Sample workspace: `demo@northwind.example` / `harbor-demo`. The homepage chat uses that agent. Ask where order 4471 is, or how to mount bracket B-14.
 
 Workspace data is written to `data/store.json`.
+
+## Docs
+
+- [Product requirements](docs/prd.md)
+- [Tech spec](docs/tech-spec.md)
