@@ -25,6 +25,22 @@ Customers ask the same shipping, pricing, and returns questions, including after
 - Sign-in, agents, sources, chat, leads, and the widget work without an API key.
 - Google sign-in, card checkout, and chat apps are shown where the product map includes them, and they are not connected.
 
+## Build now
+
+Decided 1 November 2026, after comparing several outside suggestions with the product as it runs. The outcome to aim at is this: a visitor on a dense site (a docs page, a pricing page, a developer dashboard) gets the next step from that page, with the source named, and the owner sees where people got stuck.
+
+These five ship together. Each one is weak alone.
+
+1. **One script line, plus the page the visitor is on.** The install stays a single script tag. The widget sends the current page URL with the question. The owner later sees which page the question came from.
+2. **Paste one public URL and ask.** The homepage takes a URL, stores that page, and answers one question from it with the source named. Northwind stays as the sample behind that. One page will not hold a whole business. When the answer is missing, the reply says so and the owner can add the next URL. A full-site crawl waits.
+3. **Retrieval that survives a paraphrase.** Overlapping words miss “return” against “refund.” Replace that match with local semantic search, still on this machine. The reply stays a sentence from the source, or a clear miss. A hosted model is not required for this step.
+4. **The miss list.** Every question the agent cannot answer is saved with the page URL and the closest source. The desk shows that list and a way to paste the missing paragraph onto the agent.
+5. **Say what the product is.** PlugMyChat is a guide for sites where the answer is already published and people cannot find it. Docs, pricing, and developer dashboards come before a generic support bot. The promise is: it takes you to the step on the page you are on, and it does not invent a step that page does not contain.
+
+## Later
+
+Useful, and not part of this round: WhatsApp, Hindi and other languages, Shopify order lookup, charging a card, a second plan, PDF and Notion import, webhooks, agency white-label, crawling a whole domain, and proactive popups. Pick them after the five above have been tried on real sites.
+
 ## Goals
 
 1. A new owner can create an account, add one source, test an answer, and copy an install snippet.
