@@ -25,21 +25,19 @@ Customers ask the same shipping, pricing, and returns questions, including after
 - Sign-in, agents, sources, chat, leads, and the widget work without an API key.
 - Google sign-in, card checkout, and chat apps are shown where the product map includes them, and they are not connected.
 
-## Build now
+## First implementation
 
-Decided 1 November 2026, after comparing several outside suggestions with the product as it runs. The outcome to aim at is this: a visitor on a dense site (a docs page, a pricing page, a developer dashboard) gets the next step from that page, with the source named, and the owner sees where people got stuck.
+Decided 1 November 2026. A single URL cannot build a finished bot. The first thing we ship is a trial on the PlugMyChat site: paste a public URL, see how that page would answer, and adjust the widget until it looks like theirs. Install stays one script tag, and that script uses the look they just set.
 
-These five ship together. Each one is weak alone.
+1. **URL trial on our site.** The homepage takes one public `http` or `https` URL, reads that page, and opens a chat against it. The reply cites a sentence from that page, or says the page does not contain the answer. The screen says this is a one-page trial, and that more pages can be added after sign-in. Northwind stays available as a sample.
+2. **The trial uses their widget.** Name, welcome line, accent color, and launcher label update the preview as they type. The same settings are what the embed and the install script use. The launcher is no longer a fixed indigo button.
+3. **A match that finds the paragraph.** On that one page, overlapping words are too brittle for the trial. Retrieval ranks passages by meaning, still on this machine, and the reply is still a sentence from the page or a miss. No hosted model.
 
-1. **One script line, plus the page the visitor is on.** The install stays a single script tag. The widget sends the current page URL with the question. The owner later sees which page the question came from.
-2. **Paste one public URL and ask.** The homepage takes a URL, stores that page, and answers one question from it with the source named. Northwind stays as the sample behind that. One page will not hold a whole business. When the answer is missing, the reply says so and the owner can add the next URL. A full-site crawl waits.
-3. **Retrieval that survives a paraphrase.** Overlapping words miss “return” against “refund.” Replace that match with local semantic search, still on this machine. The reply stays a sentence from the source, or a clear miss. A hosted model is not required for this step.
-4. **The miss list.** Every question the agent cannot answer is saved with the page URL and the closest source. The desk shows that list and a way to paste the missing paragraph onto the agent.
-5. **Say what the product is.** PlugMyChat is a guide for sites where the answer is already published and people cannot find it. Docs, pricing, and developer dashboards come before a generic support bot. The promise is: it takes you to the step on the page you are on, and it does not invent a step that page does not contain.
+The next round, after this trial has been used on real pages: save the miss list with the page URL, send the visitor’s current page from the installed widget, and let the owner add a second URL when the first page was not enough.
 
 ## Later
 
-Useful, and not part of this round: WhatsApp, Hindi and other languages, Shopify order lookup, charging a card, a second plan, PDF and Notion import, webhooks, agency white-label, crawling a whole domain, and proactive popups. Pick them after the five above have been tried on real sites.
+WhatsApp, other languages, Shopify order lookup, charging a card, a second plan, PDF and Notion import, webhooks, agency white-label, crawling a whole domain, and proactive popups.
 
 ## Goals
 
