@@ -113,7 +113,7 @@ The script reads `data-agent` and the script URL’s origin. It appends a button
 
 `POST /api/trial` with `{ url }` reads one public page and returns `{ title, text, url }`. It does not write the store.
 
-`POST /api/trial/chat` with `{ title, text, question }` ranks that page and returns the composed reply. It does not write the store and does not spend a credit. `text` is sliced to 20,000 characters.
+`POST /api/trial/chat` with `{ question, sources: [{ title, text }] }` ranks those pages and returns the composed reply. A single `{ title, text, question }` body still works. It does not write the store and does not spend a credit. Each `text` is sliced to 20,000 characters, and at most five sources are ranked. The homepage trial stores the pages in `sessionStorage` under `plugmychat-trial`. Keep this agent creates the agent and adds each URL as a source. Signed-out visitors are sent to `/sign-in` with `saveAfterSignIn` set, and a successful sign-in finishes the save.
 
 `GET /api/misses` requires a session and returns misses for the user’s agents, newest first, with the agent name.
 
@@ -129,7 +129,7 @@ The script reads `data-agent` and the script URL’s origin. It appends a button
 | `GET /api/misses` | session | Unanswered questions for those agents |
 | `POST /api/misses/{id}` | session | Saves a paragraph and removes the miss |
 | `POST /api/trial` | none | Reads one public page for the homepage trial |
-| `POST /api/trial/chat` | none | Answers from that page without saving it |
+| `POST /api/trial/chat` | none | Answers from the trial pages without saving them |
 | `POST /api/partners` | none | Saves an agency name and website. Name at least 2 characters, website at least 4 |
 
 Marketing routes are server or client pages under `app/` and do not write the store except agencies (`/api/partners`) and the public chat.
@@ -163,5 +163,5 @@ Open `http://127.0.0.1:43123`. Workspace data is `data/store.json` and is not co
 - Retrieval is BM25 plus a small related-word list. A paraphrase outside that list still misses.
 - The credit check and the chat write share one `updateDatabase` call, so a failed check does not append messages. A crash during the rename can leave the previous file, because the write uses a temp file and `rename`.
 - The widget launcher uses the agent accent. The panel uses Dose tokens plus that accent on the top border.
-- Keeping a trial agent sends an unsigned visitor to sign-in. The page stays in `sessionStorage` under `plugmychat-trial`. Sign-in does not finish the save on its own. The visitor returns to the homepage and chooses Keep this agent again.
+- The homepage trial holds at most five pages. It does not follow links or crawl a domain.
 - There is no automated test suite in the repo. Checks so far are typecheck, Hallmark lint on the homepage, and manual API calls.

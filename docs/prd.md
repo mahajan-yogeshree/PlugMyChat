@@ -29,13 +29,15 @@ Customers ask the same shipping, pricing, and returns questions, including after
 
 Decided 1 November 2026. A single URL cannot build a finished bot. The first thing we ship is a trial on the PlugMyChat site: paste a public URL, see how that page would answer, and adjust the widget until it looks like theirs. Install stays one script tag. That script uses the look they just set, and it sends the page the visitor is on with the question.
 
-1. **URL trial on our site.** The homepage takes one public `http` or `https` URL, reads that page, and opens a chat against it. The reply cites a sentence from that page, or says the page does not contain the answer. The screen says this is a one-page trial, and that more pages can be added after sign-in. Northwind stays available as a sample.
+1. **URL trial on our site.** The homepage takes one public `http` or `https` URL, reads that page, and opens a chat against it. The reply cites a sentence from that page, or says the page does not contain the answer. The screen says this starts with one page. Northwind stays available as a sample.
 2. **The trial uses their widget.** Name, welcome line, accent color, and launcher label update the preview as they type. The same settings are what the embed and the install script use. The launcher is no longer a fixed indigo button.
 3. **A match that finds the paragraph.** Retrieval ranks passages with BM25, a light stem, and a short list of related words (refund and return, shipping and delivery). It still runs on this machine. The reply is a sentence from the page, or a miss. No hosted model.
 4. **The bot didn’t know.** A miss is saved with the question, the page URL, and the closest source. The owner opens that list, pastes the missing paragraph, and the question leaves the list. The paragraph becomes a note source, still inside the plan’s character cap.
 5. **The page the visitor is on.** The install stays one script tag. The widget already sits on the page, so it passes `window.location.href` with the question. Inbox and the miss list show that URL.
 
-The next round, after this trial has been used on real pages: let the owner add a second URL when the first page was not enough.
+## Second implementation
+
+When the first page does not contain the answer, the trial takes another public URL, up to five. The reply cites the page that matched. Keep this agent stores every page. If the visitor is signed out, sign-in finishes that save and opens the agent.
 
 ## Later
 

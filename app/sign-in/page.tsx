@@ -2,17 +2,25 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { readTrial, saveTrialAgent } from "@/lib/save-trial";
 
 export default function SignInPage() {
   const router = useRouter();
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [pending, setPending] = useState(false);
+
+  useEffect(() => {
+    const saved = readTrial();
+    if (saved?.saveAfterSignIn) {
+      setNotice(`Sign in to keep ${saved.pages.length === 1 ? "the page" : `${saved.pages.length} pages`} you just tried.`);
+    }
+  }, []);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -32,6 +40,23 @@ export default function SignInPage() {
     if (!response.ok) {
       setError(body.error || "Could not sign in.");
       return;
+    }
+    const saved = readTrial();
+    if (saved?.saveAfterSignIn) {
+      const result = await saveTrialAgent(saved);
+      if (result.status === "saved") {
+        router.push(`/app/agents/${result.agentId}`);
+        router.refresh();
+        return;
+      }
+      if (result.status === "error") {
+        setError(result.error);
+        if (result.agentId) {
+          router.push(`/app/agents/${result.agentId}`);
+          router.refresh();
+        }
+        return;
+      }
     }
     router.push("/app");
     router.refresh();

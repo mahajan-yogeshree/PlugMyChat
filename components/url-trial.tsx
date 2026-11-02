@@ -1,23 +1,31 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  TRIAL_PAGE_LIMIT,
+  clearTrial,
+  readTrial,
+  saveTrialAgent,
+  writeTrial,
+  type TrialPage,
+} from "@/lib/save-trial";
 
-const STORAGE = "plugmychat-trial";
-
-type Page = { title: string; text: string; url: string };
 type Bubble = { role: "user" | "assistant"; content: string };
+
+const DEFAULT_WELCOME = "Ask about these pages. I only answer from what they say.";
 
 export function UrlTrial() {
   const [url, setUrl] = useState("");
-  const [page, setPage] = useState<Page | null>(null);
+  const [pages, setPages] = useState<TrialPage[]>([]);
   const [name, setName] = useState("Site guide");
-  const [welcome, setWelcome] = useState("Ask about this page. I only answer from what it says.");
+  const [welcome, setWelcome] = useState(DEFAULT_WELCOME);
   const [accent, setAccent] = useState("#1f7a4d");
   const [launcherLabel, setLauncherLabel] = useState("Chat");
+  const [saveAfterSignIn, setSaveAfterSignIn] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(false);
@@ -25,37 +33,50 @@ export function UrlTrial() {
   const [busy, setBusy] = useState(false);
   const [messages, setMessages] = useState<Bubble[]>([]);
   const [open, setOpen] = useState(true);
+  const skipPersist = useRef(false);
+  const thread = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const raw = sessionStorage.getItem(STORAGE);
-    if (!raw) return;
-    try {
-      const saved = JSON.parse(raw) as Page & { name: string; welcome: string; accent: string; launcherLabel: string };
-      setPage({ title: saved.title, text: saved.text, url: saved.url });
-      setUrl(saved.url);
-      setName(saved.name);
-      setWelcome(saved.welcome);
-      setAccent(saved.accent);
-      setLauncherLabel(saved.launcherLabel);
-      setMessages([{ role: "assistant", content: saved.welcome }]);
-    } catch {
-      sessionStorage.removeItem(STORAGE);
-    }
-  }, []);
+    const node = thread.current;
+    if (!node) return;
+    node.scrollTop = node.scrollHeight;
+  }, [messages, busy]);
 
-  function remember(next: Page, look: { name: string; welcome: string; accent: string; launcherLabel: string }) {
-    sessionStorage.setItem(STORAGE, JSON.stringify({ ...next, ...look }));
-  }
+  useEffect(() => {
+    if (skipPersist.current || pages.length === 0) return;
+    writeTrial({ pages, name, welcome, accent, launcherLabel, saveAfterSignIn });
+  }, [pages, name, welcome, accent, launcherLabel, saveAfterSignIn]);
+
+  useEffect(() => {
+    const saved = readTrial();
+    if (!saved) return;
+    setPages(saved.pages);
+    setName(saved.name);
+    setWelcome(saved.welcome);
+    setAccent(saved.accent);
+    setLauncherLabel(saved.launcherLabel);
+    setSaveAfterSignIn(saved.saveAfterSignIn);
+    setMessages([{ role: "assistant", content: saved.welcome }]);
+  }, []);
 
   async function loadPage(event: React.FormEvent) {
     event.preventDefault();
-    setLoading(true);
     setError("");
     setNotice("");
+    const nextUrl = url.trim();
+    if (pages.some((page) => page.url === nextUrl)) {
+      setError("That page is already in this trial.");
+      return;
+    }
+    if (pages.length >= TRIAL_PAGE_LIMIT) {
+      setError("Five pages is the trial limit. Keep the agent to add more in the desk.");
+      return;
+    }
+    setLoading(true);
     const response = await fetch("/api/trial", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ url }),
+      body: JSON.stringify({ url: nextUrl }),
     });
     const body = await response.json();
     setLoading(false);
@@ -64,24 +85,37 @@ export function UrlTrial() {
       return;
     }
     const next = { title: body.title, text: body.text, url: body.url };
-    setPage(next);
-    setMessages([{ role: "assistant", content: welcome }]);
+    if (pages.some((page) => page.url === body.url)) {
+      setError("That page is already in this trial.");
+      return;
+    }
+    const nextPages = [...pages, next];
+    setPages(nextPages);
+    setUrl("");
     setOpen(true);
-    remember(next, { name, welcome, accent, launcherLabel });
+    setMessages((current) =>
+      current.length === 0
+        ? [{ role: "assistant", content: welcome }]
+        : [...current, { role: "assistant", content: `Added “${next.title}”. Ask again if the last answer was missing.` }],
+    );
   }
 
   async function ask(event: React.FormEvent) {
     event.preventDefault();
-    if (!page || !draft.trim() || busy) return;
+    if (pages.length === 0 || !draft.trim() || busy) return;
     const question = draft.trim();
     setDraft("");
     setBusy(true);
     setError("");
+    setNotice("");
     setMessages((current) => [...current, { role: "user", content: question }]);
     const response = await fetch("/api/trial/chat", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ title: page.title, text: page.text, question }),
+      body: JSON.stringify({
+        question,
+        sources: pages.map((page) => ({ title: page.title, text: page.text })),
+      }),
     });
     const body = await response.json();
     setBusy(false);
@@ -90,48 +124,46 @@ export function UrlTrial() {
       return;
     }
     setMessages((current) => [...current, { role: "assistant", content: body.content }]);
+    if (body.missed && pages.length < TRIAL_PAGE_LIMIT) {
+      setNotice("That was not on the pages you added. Add the page that has the answer.");
+    }
+  }
+
+  function removePage(target: string) {
+    const nextPages = pages.filter((page) => page.url !== target);
+    setPages(nextPages);
+    if (nextPages.length === 0) clearTrial();
   }
 
   async function keep() {
-    if (!page) return;
+    if (pages.length === 0) return;
     setError("");
     setNotice("");
-    remember(page, { name, welcome, accent, launcherLabel });
-    const me = await fetch("/api/me");
-    if (me.status === 401) {
+    const look = { name, welcome, accent, launcherLabel };
+    const result = await saveTrialAgent({ pages, ...look, saveAfterSignIn: false });
+    if (result.status === "unsigned") {
+      writeTrial({ pages, ...look, saveAfterSignIn: true });
+      setSaveAfterSignIn(true);
       window.location.href = "/sign-in";
       return;
     }
-    const created = await fetch("/api/agents", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ name, welcome, accent, launcherLabel }),
-    });
-    const agentBody = await created.json();
-    if (!created.ok) {
-      setError(agentBody.error || "Could not save the agent.");
+    skipPersist.current = true;
+    if (result.status === "error") {
+      setError(result.error);
+      if (result.agentId) window.location.href = `/app/agents/${result.agentId}`;
       return;
     }
-    const source = await fetch(`/api/agents/${agentBody.agent.id}/sources`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ kind: "url", title: page.title, text: page.text, url: page.url }),
-    });
-    const sourceBody = await source.json();
-    if (!source.ok) {
-      setError(sourceBody.error || "The agent was created, but the page was not saved.");
-      return;
-    }
-    sessionStorage.removeItem(STORAGE);
-    window.location.href = `/app/agents/${agentBody.agent.id}`;
+    window.location.href = `/app/agents/${result.agentId}`;
   }
+
+  const pageLabel = pages.length === 1 ? "One page in this trial" : `${pages.length} pages in this trial`;
 
   return (
     <div id="trial" className="grid items-start gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
       <div>
-        <h2>Try one page.</h2>
+        <h2>Try your pages.</h2>
         <p className="mt-3 text-muted-foreground">
-          This is a trial of how the bot will answer from a single public page. It is not a finished agent. Add more pages after you keep it.
+          Start with one public page. If the answer is missing, add the page that has it. This is still a trial, not a crawl of the whole site.
         </p>
         <form onSubmit={loadPage} className="mt-6 flex flex-col gap-3 sm:flex-row">
           <Label htmlFor="trial-url" className="sr-only">Page URL</Label>
@@ -139,13 +171,26 @@ export function UrlTrial() {
             id="trial-url"
             type="url"
             required
-            placeholder="https://example.com/pricing"
+            placeholder={pages.length === 0 ? "https://example.com/pricing" : "https://example.com/shipping"}
             value={url}
             onChange={(event) => setUrl(event.target.value)}
           />
-          <Button type="submit" disabled={loading}>{loading ? "Reading…" : "Read page"}</Button>
+          <Button type="submit" disabled={loading || pages.length >= TRIAL_PAGE_LIMIT}>
+            {loading ? "Reading…" : pages.length === 0 ? "Read page" : "Add page"}
+          </Button>
         </form>
-        {page ? <p className="mt-3 text-sm text-muted-foreground">Read “{page.title}”.</p> : null}
+        {pages.length > 0 ? (
+          <ul className="mt-4 space-y-2">
+            {pages.map((page) => (
+              <li key={page.url} className="flex items-start justify-between gap-3 text-sm">
+                <span>Read “{page.title}”.</span>
+                <button type="button" className="text-muted-foreground underline" onClick={() => removePage(page.url)}>
+                  Remove
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : null}
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
           <div>
             <Label htmlFor="trial-name">Name</Label>
@@ -166,7 +211,7 @@ export function UrlTrial() {
         </div>
         {error ? <p className="mt-3 text-sm text-destructive">{error}</p> : null}
         {notice ? <p className="mt-3 text-sm">{notice}</p> : null}
-        {page ? (
+        {pages.length > 0 ? (
           <Button type="button" variant="outline" className="mt-4" onClick={() => void keep()}>
             Keep this agent
           </Button>
@@ -185,9 +230,9 @@ export function UrlTrial() {
           <div className="mt-3 flex h-[460px] w-[min(100%,380px)] flex-col overflow-hidden rounded-[14px] border bg-card" style={{ borderTop: `4px solid ${accent}` }}>
             <div className="border-b px-4 py-3">
               <p className="text-sm font-medium">{name || "Site guide"}</p>
-              <p className="text-xs text-muted-foreground">{busy ? "Looking through this page…" : "One-page trial"}</p>
+              <p className="text-xs text-muted-foreground">{busy ? "Looking through these pages…" : pages.length === 0 ? "No pages yet" : pageLabel}</p>
             </div>
-            <div className="flex-1 space-y-3 overflow-y-auto p-4">
+            <div ref={thread} className="flex-1 space-y-3 overflow-y-auto p-4">
               {messages.map((message, index) => (
                 <p key={`${message.role}-${index}`} className={`max-w-[90%] whitespace-pre-wrap px-3 py-2 text-sm ${message.role === "user" ? "ml-auto bg-ink text-paper" : "border-l border-rule"}`}>
                   {message.content}
@@ -196,8 +241,8 @@ export function UrlTrial() {
               {messages.length === 0 ? <p className="text-sm text-muted-foreground">Read a page to start the trial.</p> : null}
             </div>
             <form onSubmit={ask} className="flex gap-2 border-t p-3">
-              <Input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Ask about this page" aria-label="Question" disabled={!page || busy} />
-              <Button type="submit" disabled={!page || busy || !draft.trim()}>Send</Button>
+              <Input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Ask about these pages" aria-label="Question" disabled={pages.length === 0 || busy} />
+              <Button type="submit" disabled={pages.length === 0 || busy || !draft.trim()}>Send</Button>
             </form>
             <p className="border-t px-3 py-2 text-center text-[11px] text-muted-foreground">Powered by PlugMyChat</p>
           </div>
