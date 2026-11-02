@@ -15,6 +15,7 @@ type Agent = {
   name: string;
   welcome: string;
   accent: string;
+  launcherLabel: string;
   instructions: string;
   collectLeads: boolean;
   sources: Source[];
@@ -183,6 +184,10 @@ export function AgentStudio({ agentId }: { agentId: string }) {
             <div className="space-y-2">
               <Label htmlFor="instructions">Instructions</Label>
               <Textarea id="instructions" value={agent.instructions} onChange={(event) => setAgent({ ...agent, instructions: event.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="launcher">Launcher label</Label>
+              <Input id="launcher" value={agent.launcherLabel || "Chat"} maxLength={24} onChange={(event) => setAgent({ ...agent, launcherLabel: event.target.value })} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="accent">Accent</Label>

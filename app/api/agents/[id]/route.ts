@@ -30,7 +30,7 @@ export async function PATCH(
   if (!user) return NextResponse.json({ error: "Sign in first." }, { status: 401 });
   const { id } = await context.params;
   const body = (await request.json().catch(() => null)) as Partial<
-    Pick<Agent, "name" | "welcome" | "accent" | "instructions" | "collectLeads">
+    Pick<Agent, "name" | "welcome" | "accent" | "launcherLabel" | "instructions" | "collectLeads">
   > | null;
   const agent = await updateDatabase((db) => {
     const record = db.agents.find((item) => item.id === id && owned(item, user.id));
@@ -39,6 +39,9 @@ export async function PATCH(
     if (typeof body?.welcome === "string") record.welcome = body.welcome.slice(0, 400);
     if (typeof body?.accent === "string" && /^#[0-9a-fA-F]{6}$/.test(body.accent)) {
       record.accent = body.accent;
+    }
+    if (typeof body?.launcherLabel === "string" && body.launcherLabel.trim()) {
+      record.launcherLabel = body.launcherLabel.trim().slice(0, 24);
     }
     if (typeof body?.instructions === "string") record.instructions = body.instructions.slice(0, 1000);
     if (typeof body?.collectLeads === "boolean") record.collectLeads = body.collectLeads;
@@ -60,6 +63,7 @@ export async function DELETE(
     if (!record) return false;
     db.agents = db.agents.filter((item) => item.id !== id);
     db.conversations = db.conversations.filter((item) => item.agentId !== id);
+    db.misses = db.misses.filter((item) => item.agentId !== id);
     return true;
   });
   if (!removed) return NextResponse.json({ error: "Agent not found." }, { status: 404 });

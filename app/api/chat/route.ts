@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { composeAnswer, extractEmail, rankSources } from "@/lib/answer";
+import { cleanPageUrl, composeAnswer, extractEmail, rankSources } from "@/lib/answer";
 import { getPlan } from "@/lib/plans";
 import { createId, updateDatabase } from "@/lib/store";
 import type { Conversation } from "@/lib/types";
@@ -11,6 +11,7 @@ export async function POST(request: Request) {
     conversationId?: string;
     message?: string;
     visitor?: string;
+    pageUrl?: string;
   } | null;
   const message = body?.message?.trim() ?? "";
   if (!body?.agentId || message.length < 1 || message.length > 2000) {
@@ -48,11 +49,13 @@ export async function POST(request: Request) {
         db.conversations.push(conversation);
       }
       const now = new Date().toISOString();
+      const pageUrl = cleanPageUrl(body.pageUrl);
       conversation.messages.push({
         id: createId("msg"),
         role: "user",
         content: message,
         citations: [],
+        pageUrl,
         createdAt: now,
       });
       const email = extractEmail(message);
@@ -75,6 +78,23 @@ export async function POST(request: Request) {
       }
       const ranked = rankSources(message, agent.sources);
       const answer = composeAnswer(message, ranked);
+      if (answer.missed) {
+        const duplicate = db.misses.some(
+          (miss) => miss.agentId === agent.id && miss.question === message && miss.pageUrl === pageUrl,
+        );
+        if (!duplicate) {
+          db.misses.push({
+            id: createId("mis"),
+            agentId: agent.id,
+            question: message.slice(0, 500),
+            pageUrl,
+            closestTitle: answer.closestTitle,
+            closestText: answer.closestText.slice(0, 400),
+            createdAt: now,
+          });
+          db.misses = db.misses.slice(-200);
+        }
+      }
       if (leadSaved) {
         answer.content = `Saved ${email}. ${answer.content}`;
       }
@@ -83,6 +103,7 @@ export async function POST(request: Request) {
         role: "assistant" as const,
         content: answer.content,
         citations: answer.citations,
+        pageUrl: "",
         createdAt: new Date().toISOString(),
       };
       conversation.messages.push(reply);

@@ -16,7 +16,12 @@ export async function GET() {
 export async function POST(request: Request) {
   const user = await currentUser();
   if (!user) return NextResponse.json({ error: "Sign in first." }, { status: 401 });
-  const body = (await request.json().catch(() => null)) as { name?: string } | null;
+  const body = (await request.json().catch(() => null)) as {
+    name?: string;
+    welcome?: string;
+    accent?: string;
+    launcherLabel?: string;
+  } | null;
   const name = body?.name?.trim() || "New agent";
   try {
     const agent = await updateDatabase((db) => {
@@ -29,8 +34,9 @@ export async function POST(request: Request) {
         id: createId("agt"),
         userId: user.id,
         name,
-        welcome: `Hi, I'm ${name}. Ask me about this business.`,
-        accent: "#1f7a4d",
+        welcome: body?.welcome?.trim().slice(0, 400) || `Hi, I'm ${name}. Ask me about this business.`,
+        accent: /^#[0-9a-fA-F]{6}$/.test(body?.accent ?? "") ? body!.accent! : "#1f7a4d",
+        launcherLabel: body?.launcherLabel?.trim().slice(0, 24) || "Chat",
         instructions: "Answer only from the sources. If you are unsure, ask for an email.",
         collectLeads: true,
         sources: [],

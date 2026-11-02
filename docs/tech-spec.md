@@ -53,15 +53,17 @@ Cookie name: `cwt_session`. Flags: `httpOnly`, `sameSite: lax`, `path: /`, `maxA
 
 ## Retrieval
 
-`rankSources` lowercases the question, keeps tokens longer than 2 characters, and drops a small stop list. Each source body is split on blank lines and sentence boundaries. A piece scores 2 when a query token is a whole word in it, or 1 when the token appears as a substring. Pieces with score 0 are dropped. The top 3 pieces are kept.
+`rankSources` lowercases the question, keeps tokens longer than 2 characters, drops a small stop list, and stems a trailing `ing`, `ed`, `es`, or `s`. A short related-word list expands refund to return, shipping to delivery, and a few other support pairs. Each source body is split on blank lines and sentence boundaries. Passages score with BM25 (`k` 1.2, `b` 0.75). Passages with score 0 are dropped. The top 3 are kept.
 
-`composeAnswer` keeps only pieces whose title matches the highest-scoring piece, at most two sentences. The reply ends with `From {title}.` If nothing scored, the reply says the sources do not contain the answer and asks for an email.
+`composeAnswer` keeps only pieces whose title matches the highest-scoring piece, at most two sentences. The reply ends with `From {title}.` If nothing scored, `missed` is true and the reply says the sources do not contain the answer and asks for an email. A miss stores `closestTitle` and `closestText` from that result, which are empty when every passage scored zero.
 
 The agent `instructions` string is not an input to `composeAnswer`.
 
 ## Chat
 
-`POST /api/chat` body: `{ agentId, message, conversationId?, visitor? }`.
+`POST /api/chat` body: `{ agentId, message, conversationId?, visitor?, pageUrl? }`.
+
+`pageUrl` is kept only when it is `http` or `https`, trimmed to 500 characters. It is stored on the visitor message. The assistant message stores an empty page URL. When `composeAnswer` sets `missed`, a miss row (`mis_…`) is appended unless the same agent, question, and page URL are already listed. The list keeps the newest 200 misses.
 
 - `message` must be 1 to 2,000 characters or the response is 400.
 - Unknown agent is 404.
@@ -93,21 +95,29 @@ The widget and the homepage panel do not send a session cookie requirement. Anyo
 
 ## Agents and plans
 
-`POST /api/agents` with `{ name }` creates an agent until `plan.agents` is reached. Defaults: welcome line includes the name, accent `#1f7a4d`, `collectLeads: true`, empty sources.
+`POST /api/agents` with `{ name, welcome?, accent?, launcherLabel? }` creates an agent until `plan.agents` is reached. Defaults: welcome line includes the name, accent `#1f7a4d`, launcher label `Chat`, `collectLeads: true`, empty sources. A welcome shorter than a sentence is 400. An accent that is not `#` plus 6 hex digits falls back to `#1f7a4d`. The launcher label is sliced to 24 characters.
 
-`PATCH /api/agents/{id}` updates `name`, `welcome`, `accent` (a `#` plus 6 hex digits), `instructions`, and `collectLeads`.
+`PATCH /api/agents/{id}` updates `name`, `welcome`, `accent` (a `#` plus 6 hex digits), `launcherLabel`, `instructions`, and `collectLeads`. Deleting an agent also removes its misses.
 
 `POST /api/billing` with `{ plan }` sets the user’s plan to `starter`, `hobby`, `standard`, or `business`. No payment object is created.
 
-`GET /api/public-agent/{id}` returns `id`, `name`, `welcome`, `accent`, and `showBadge`. `showBadge` is false when the owner’s plan has `removeBranding` (Standard and Business).
+`GET /api/public-agent/{id}` returns `id`, `name`, `welcome`, `accent`, `launcherLabel`, and `showBadge`. `showBadge` is false when the owner’s plan has `removeBranding` (Standard and Business).
 
 ## Widget
 
-`GET /widget.js` returns a small script, `cache-control: no-store`.
+`GET /widget.js` returns a small script, `cache-control: no-store`. Install stays one tag: `<script src="{origin}/widget.js" data-agent="{id}"></script>`.
 
-The script reads `data-agent` and the script URL’s origin, then appends a fixed Chat button and a hidden iframe pointed at `{origin}/embed/{agent id}`. The embed page renders `ChatPanel` for that id.
+The script reads `data-agent` and the script URL’s origin. It appends a button whose default label is Chat and whose default background is `#1f7a4d`, then fetches `/api/public-agent/{id}` and replaces the label and background when the agent record has them. The iframe points at `{origin}/embed/{agent id}`. When `window.location.href` is `http` or `https`, the iframe URL adds `?page=` with that address. The embed page passes `page` into `ChatPanel`, which posts it as `pageUrl`.
 
-The button colors in `widget.js` are still the earlier indigo inline styles. The embed page itself uses the Dose tokens. The launcher and the panel do not share one stylesheet yet.
+## Trial and misses
+
+`POST /api/trial` with `{ url }` reads one public page and returns `{ title, text, url }`. It does not write the store.
+
+`POST /api/trial/chat` with `{ title, text, question }` ranks that page and returns the composed reply. It does not write the store and does not spend a credit. `text` is sliced to 20,000 characters.
+
+`GET /api/misses` requires a session and returns misses for the user’s agents, newest first, with the agent name.
+
+`POST /api/misses/{id}` with `{ text }` of at least 20 characters adds a note source titled with the closest source, or “Added after a miss”, then deletes the miss. The plan character cap still applies.
 
 ## Other routes
 
@@ -116,6 +126,10 @@ The button colors in `widget.js` are still the earlier indigo inline styles. The
 | `GET /api/agents` | session | Agents for the user |
 | `GET /api/conversations` | session | Conversations whose agent belongs to the user |
 | `GET /api/leads` | session | Leads for those agents |
+| `GET /api/misses` | session | Unanswered questions for those agents |
+| `POST /api/misses/{id}` | session | Saves a paragraph and removes the miss |
+| `POST /api/trial` | none | Reads one public page for the homepage trial |
+| `POST /api/trial/chat` | none | Answers from that page without saving it |
 | `POST /api/partners` | none | Saves an agency name and website. Name at least 2 characters, website at least 4 |
 
 Marketing routes are server or client pages under `app/` and do not write the store except agencies (`/api/partners`) and the public chat.
@@ -146,7 +160,8 @@ Open `http://127.0.0.1:43123`. Workspace data is `data/store.json` and is not co
 ## Known limits
 
 - One JSON file. Two server processes will race. The in-process queue only serializes writers in one process.
-- Retrieval is keyword overlap. It will miss a paraphrase that shares no tokens with the source.
+- Retrieval is BM25 plus a small related-word list. A paraphrase outside that list still misses.
 - The credit check and the chat write share one `updateDatabase` call, so a failed check does not append messages. A crash during the rename can leave the previous file, because the write uses a temp file and `rename`.
-- The widget launcher is not themed with Dose.
+- The widget launcher uses the agent accent. The panel uses Dose tokens plus that accent on the top border.
+- Keeping a trial agent sends an unsigned visitor to sign-in. The page stays in `sessionStorage` under `plugmychat-trial`. Sign-in does not finish the save on its own. The visitor returns to the homepage and chooses Keep this agent again.
 - There is no automated test suite in the repo. Checks so far are typecheck, Hallmark lint on the homepage, and manual API calls.

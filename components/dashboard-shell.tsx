@@ -15,6 +15,7 @@ const links = [
   ["/app", "Overview"],
   ["/app/agents", "Agents"],
   ["/app/inbox", "Inbox"],
+  ["/app/misses", "Didn't know"],
   ["/app/leads", "Leads"],
   ["/app/billing", "Plan"],
 ];

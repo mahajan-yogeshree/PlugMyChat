@@ -17,6 +17,7 @@ export type Agent = {
   name: string;
   welcome: string;
   accent: string;
+  launcherLabel: string;
   instructions: string;
   collectLeads: boolean;
   sources: Source[];
@@ -28,6 +29,17 @@ export type ChatMessage = {
   role: "user" | "assistant";
   content: string;
   citations: string[];
+  pageUrl: string;
+  createdAt: string;
+};
+
+export type Miss = {
+  id: string;
+  agentId: string;
+  question: string;
+  pageUrl: string;
+  closestTitle: string;
+  closestText: string;
   createdAt: string;
 };
 
@@ -79,4 +91,5 @@ export type Database = {
   conversations: Conversation[];
   leads: Lead[];
   partners: PartnerRequest[];
+  misses: Miss[];
 };

@@ -18,6 +18,7 @@ export async function GET(
       name: record.name,
       welcome: record.welcome,
       accent: record.accent,
+      launcherLabel: record.launcherLabel || "Chat",
       showBadge: !plan.removeBranding,
     };
   });

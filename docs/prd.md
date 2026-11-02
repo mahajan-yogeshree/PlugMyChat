@@ -27,13 +27,15 @@ Customers ask the same shipping, pricing, and returns questions, including after
 
 ## First implementation
 
-Decided 1 November 2026. A single URL cannot build a finished bot. The first thing we ship is a trial on the PlugMyChat site: paste a public URL, see how that page would answer, and adjust the widget until it looks like theirs. Install stays one script tag, and that script uses the look they just set.
+Decided 1 November 2026. A single URL cannot build a finished bot. The first thing we ship is a trial on the PlugMyChat site: paste a public URL, see how that page would answer, and adjust the widget until it looks like theirs. Install stays one script tag. That script uses the look they just set, and it sends the page the visitor is on with the question.
 
 1. **URL trial on our site.** The homepage takes one public `http` or `https` URL, reads that page, and opens a chat against it. The reply cites a sentence from that page, or says the page does not contain the answer. The screen says this is a one-page trial, and that more pages can be added after sign-in. Northwind stays available as a sample.
 2. **The trial uses their widget.** Name, welcome line, accent color, and launcher label update the preview as they type. The same settings are what the embed and the install script use. The launcher is no longer a fixed indigo button.
-3. **A match that finds the paragraph.** On that one page, overlapping words are too brittle for the trial. Retrieval ranks passages by meaning, still on this machine, and the reply is still a sentence from the page or a miss. No hosted model.
+3. **A match that finds the paragraph.** Retrieval ranks passages with BM25, a light stem, and a short list of related words (refund and return, shipping and delivery). It still runs on this machine. The reply is a sentence from the page, or a miss. No hosted model.
+4. **The bot didn’t know.** A miss is saved with the question, the page URL, and the closest source. The owner opens that list, pastes the missing paragraph, and the question leaves the list. The paragraph becomes a note source, still inside the plan’s character cap.
+5. **The page the visitor is on.** The install stays one script tag. The widget already sits on the page, so it passes `window.location.href` with the question. Inbox and the miss list show that URL.
 
-The next round, after this trial has been used on real pages: save the miss list with the page URL, send the visitor’s current page from the installed widget, and let the owner add a second URL when the first page was not enough.
+The next round, after this trial has been used on real pages: let the owner add a second URL when the first page was not enough.
 
 ## Later
 
@@ -64,9 +66,10 @@ WhatsApp, other languages, Shopify order lookup, charging a card, a second plan,
 3. Create an agent, within the plan’s agent cap.
 4. Add knowledge: pasted text, a `.txt`, `.md`, or `.csv` file, or one public `http` or `https` page.
 5. Test a question on the Test tab. If the reply is wrong, add the missing paragraph.
-6. Copy the script tag from Install and place it before `</body>` on the site.
-7. Read conversations in Inbox and emails in Leads.
-8. Change the workspace plan on the Plan page. The change is local and does not charge a card.
+6. Copy the script tag from Install and place it before `</body>` on the site. The tag is one line. The widget sends the page URL with each question.
+7. Read conversations in Inbox, including the page each question came from, and emails in Leads.
+8. Open The bot didn’t know, and paste the paragraph that should have answered a miss.
+9. Change the workspace plan on the Plan page. The change is local and does not charge a card.
 
 ### Visitor
 
@@ -92,7 +95,7 @@ Sample sign-in: `demo@northwind.example` / `harbor-demo` (Standard plan).
 
 ### Agent
 
-- Name, welcome line, accent color, instructions, and a lead-collection switch.
+- Name, welcome line, accent color, launcher label, instructions, and a lead-collection switch.
 - The welcome line is what the visitor sees first.
 - Instructions are stored with the agent. This build does not send them to a model. The reply is chosen from sources.
 - Creating an agent fails when the workspace is already at its plan’s agent count.
@@ -107,21 +110,21 @@ Sample sign-in: `demo@northwind.example` / `harbor-demo` (Standard plan).
 
 ### Answers
 
-- The question is matched to stored sentences by overlapping words.
+- The question is ranked against stored sentences with BM25, a light stem, and a short list of related words.
 - The reply uses sentences from the single best source title, then names that title.
-- If nothing matches, the reply says the sources do not contain it and invites an email.
+- If nothing matches, the reply says the sources do not contain it and invites an email. That question is saved on The bot didn’t know, with the page URL when the widget sent one.
 - Each assistant reply counts as one message credit for the calendar month. At the cap, chat returns an error and does not add another reply.
 - The instructions field does not change the wording of the reply in this build.
 
 ### Leads and inbox
 
 - If lead collection is on and the message contains an email, that address is saved with a short note. The same address is not saved twice for the same agent.
-- Inbox lists conversations for the signed-in owner’s agents.
+- Inbox lists conversations for the signed-in owner’s agents. A visitor message shows the page URL when one was sent.
 
 ### Install
 
 - Install shows `<script src="{origin}/widget.js" data-agent="{agent id}"></script>`.
-- The script adds a Chat button and an iframe of `/embed/{agent id}`.
+- The script adds a button labeled with the agent’s launcher label, colored with the agent’s accent, and an iframe of `/embed/{agent id}?page={current page}` when the host page is `http` or `https`.
 - The embed shows “Powered by PlugMyChat” unless the owner’s plan has the remove-branding flag (Standard and Business).
 
 ### Plans

@@ -11,6 +11,7 @@ type PublicAgent = {
   name: string;
   welcome: string;
   accent: string;
+  launcherLabel: string;
   showBadge: boolean;
 };
 
@@ -20,10 +21,12 @@ export function ChatPanel({
   agentId,
   className = "",
   sample = false,
+  pageUrl = "",
 }: {
   agentId: string;
   className?: string;
   sample?: boolean;
+  pageUrl?: string;
 }) {
   const [agent, setAgent] = useState<PublicAgent | null>(null);
   const [error, setError] = useState("");
@@ -79,7 +82,7 @@ export function ChatPanel({
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ agentId, conversationId, message }),
+        body: JSON.stringify({ agentId, conversationId, message, pageUrl }),
       });
       const body = await response.json();
       if (!response.ok) throw new Error(body.error || "The agent could not answer.");
@@ -93,17 +96,13 @@ export function ChatPanel({
   }
 
   return (
-    <div className={cn("flex h-[520px] flex-col overflow-hidden rounded-[14px] border bg-card shadow-lift", className)}>
+    <div className={cn("flex h-[520px] flex-col overflow-hidden rounded-[14px] border bg-card shadow-lift", className)} style={{ borderTop: `4px solid ${agent?.accent || "#1f7a4d"}` }}>
       <div className="flex items-center justify-between border-b px-4 py-3">
         <div>
           <p className="text-sm font-medium">{agent?.name || "Agent"}</p>
           <p className="dose text-xs text-muted-foreground">{busy ? "Looking through sources…" : "Usually replies in under a second"}</p>
         </div>
-        {agent?.accent ? (
-          <span className="dose rounded-[6px] border px-2 py-1 text-xs" style={{ background: agent.accent, color: "var(--color-paper)" }}>
-            Accent
-          </span>
-        ) : null}
+        {agent?.launcherLabel ? <span className="dose text-xs text-muted-foreground">{agent.launcherLabel}</span> : null}
       </div>
       <div className="flex-1 space-y-3 overflow-y-auto bg-muted/40 p-4">
         {loading ? <p className="text-sm text-muted-foreground">Opening the agent…</p> : null}

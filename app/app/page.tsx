@@ -41,6 +41,7 @@ export default function OverviewPage() {
       </div>
       <div className="mt-8 flex gap-3">
         <Link href="/app/agents" className={cn(buttonVariants())}>Open agents</Link>
+        <Link href="/app/misses" className={cn(buttonVariants({ variant: "outline" }))}>The bot didn’t know</Link>
         <Link href="/installation" className={cn(buttonVariants({ variant: "outline" }))}>Install guide</Link>
       </div>
       {data.agents.length === 0 ? (

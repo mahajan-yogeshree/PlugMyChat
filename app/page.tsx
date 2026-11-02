@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { ChatPanel } from "@/components/chat-panel";
+import { UrlTrial } from "@/components/url-trial";
 import { PlanTable } from "@/components/plan-table";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -46,8 +47,8 @@ export default function HomePage() {
             <h1>AI customer support that pays for itself.</h1>
             <p className="lead">It answers from your pages and cites the source.</p>
             <div className="hero-actions">
-              <Link href="/sign-in" className={cn(buttonVariants({ size: "lg" }))}>
-                Get started
+              <Link href="#trial" className={cn(buttonVariants({ size: "lg" }))}>
+                Try your page
               </Link>
               <Link href="/pricing" className={cn(buttonVariants({ variant: "outline", size: "lg" }))}>
                 See pricing
@@ -60,6 +61,10 @@ export default function HomePage() {
               <span className="dose-stamp">Cited</span>
             </aside>
           </div>
+        </section>
+
+        <section className="page-wrap band">
+          <UrlTrial />
         </section>
 
         <section className="page-wrap band">

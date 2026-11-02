@@ -44,8 +44,9 @@ function seed(): Database {
     userId: user.id,
     name: "Northwind Desk",
     welcome: "Ask about shipping, returns, or a product. I answer from Northwind's notes.",
-    accent: "#1f7a4d",
-    instructions: "Be brief. If the notes do not contain the answer, say so and offer to take an email.",
+        accent: "#1f7a4d",
+        launcherLabel: "Chat",
+        instructions: "Be brief. If the notes do not contain the answer, say so and offer to take an email.",
     collectLeads: true,
     createdAt: now,
     sources: [
@@ -86,7 +87,21 @@ function seed(): Database {
     conversations: [],
     leads: [],
     partners: [],
+    misses: [],
   };
+}
+
+function normalize(db: Database): Database {
+  if (!Array.isArray(db.misses)) db.misses = [];
+  for (const agent of db.agents) {
+    if (!agent.launcherLabel) agent.launcherLabel = "Chat";
+  }
+  for (const conversation of db.conversations ?? []) {
+    for (const message of conversation.messages) {
+      if (typeof message.pageUrl !== "string") message.pageUrl = "";
+    }
+  }
+  return db;
 }
 
 async function readDatabase(): Promise<Database> {
@@ -94,7 +109,7 @@ async function readDatabase(): Promise<Database> {
     const raw = await readFile(filePath, "utf8");
     const parsed = JSON.parse(raw) as Database;
     if (!parsed.users || !parsed.agents) return seed();
-    return parsed;
+    return normalize(parsed);
   } catch {
     return seed();
   }
