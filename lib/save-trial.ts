@@ -1,5 +1,5 @@
 export const TRIAL_STORAGE_KEY = "plugmychat-trial";
-export const TRIAL_PAGE_LIMIT = 5;
+export const TRIAL_PAGE_LIMIT = 24;
 
 export type TrialPage = { title: string; text: string; url: string };
 
@@ -80,7 +80,7 @@ export async function saveTrialAgent(draft: TrialDraft): Promise<
     const source = await fetch(`/api/agents/${agentId}/sources`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ kind: "url", title: page.title, url: page.url }),
+      body: JSON.stringify({ kind: "url", title: page.title, text: page.text, url: page.url }),
     });
     if (!source.ok) {
       const sourceBody = await source.json().catch(() => ({}));

@@ -37,7 +37,7 @@ Decided 1 November 2026. A single URL cannot build a finished bot. The first thi
 
 ## Second implementation
 
-When the first page does not contain the answer, the trial takes another public URL, up to five. The reply cites the page that matched. Keep this agent stores every page. If the visitor is signed out, sign-in finishes that save and opens the agent.
+When the first page does not contain the answer, the trial takes another public URL. A homepage is read as a site: same-host pages linked from it, up to 24, skipping paths blocked by robots.txt. A deeper URL adds only that page. The reply quotes the matching sentences and names that page. A weak overlap is a miss, and the closest page is kept for the owner. Keep this agent stores every page. If the visitor is signed out, sign-in finishes that save and opens the agent.
 
 ## Later
 
@@ -106,15 +106,15 @@ Sample sign-in: `demo@northwind.example` / `harbor-demo` (Standard plan).
 
 - A source is a title plus text, at least a short paragraph, stored up to 20,000 characters.
 - A text file is read in the browser and saved as text. It is not stored as a binary.
-- A URL must be public `http` or `https`. Local and private addresses are rejected. Redirects are not followed. The fetch stops after 8 seconds. Script and style tags are stripped.
+- A URL must be public `http` or `https`. Local and private addresses are rejected. Up to three redirects are followed when each hop stays on a public http or https address. The fetch stops after 8 seconds. Script, style, nav, and footer are stripped. A homepage also pulls same-host pages, up to 24, within about 20 seconds.
 - A YouTube link is stored as a pointer. The transcript is not downloaded.
 - Adding text that would pass the plan’s training-character cap fails with the plan name in the error.
 
 ### Answers
 
-- The question is ranked against stored sentences with BM25, a light stem, and a short list of related words.
-- The reply uses sentences from the single best source title, then names that title.
-- If nothing matches, the reply says the sources do not contain it and invites an email. That question is saved on The bot didn’t know, with the page URL when the widget sent one.
+- The question is ranked against stored sentences with BM25, a light stem, and a short list of related words. A question with two content words must match at least two of them, or a related word, before it is treated as an answer.
+- The reply quotes the matching sentences from the single best source title, then names that title.
+- If the match is too thin, the reply says the sources do not contain it and invites an email. That question is saved on The bot didn’t know, with the page URL when the widget sent one, and with the closest page when one almost matched.
 - Each assistant reply counts as one message credit for the calendar month. At the cap, chat returns an error and does not add another reply.
 - The instructions field does not change the wording of the reply in this build.
 

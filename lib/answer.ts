@@ -1,9 +1,11 @@
-export type Chunk = { title: string; text: string; score: number };
+export type Chunk = { title: string; text: string; score: number; strong: boolean };
 
 const STOP = new Set([
   "the", "and", "for", "you", "your", "with", "this", "that", "from", "have",
   "what", "when", "where", "how", "can", "are", "was", "does", "about", "into",
-  "not", "but", "our", "any", "all",
+  "not", "but", "our", "any", "all", "get", "just", "please", "need", "want",
+  "tell", "they", "them", "their", "there", "who", "why", "which", "has", "had",
+  "been", "were", "will", "would", "could", "should", "does", "did",
 ]);
 
 const RELATED = [
@@ -15,6 +17,11 @@ const RELATED = [
   ["install", "mount", "setup"],
   ["pay", "payment", "paid"],
   ["cancel", "cancellation"],
+  ["password", "login", "signin"],
+  ["contact", "email", "phone"],
+  ["warranty", "guarantee"],
+  ["help", "support", "faq"],
+  ["address", "location"],
 ];
 
 function stem(word: string) {
@@ -43,72 +50,122 @@ function expand(query: string[]) {
   return [...out];
 }
 
+function covers(original: string[], words: Set<string>) {
+  let count = 0;
+  for (const term of original) {
+    const group = RELATED.find((items) => items.some((item) => stem(item) === term));
+    const names = group ? group.map(stem) : [term];
+    if (names.some((name) => words.has(name))) count += 1;
+  }
+  return count;
+}
+
+function counts(words: string[]) {
+  const map = new Map<string, number>();
+  for (const word of words) map.set(word, (map.get(word) ?? 0) + 1);
+  return map;
+}
+
 function passages(body: string) {
   const parts = body
     .split(/\n+|(?<=[.!?])\s+/)
-    .map((part) => part.trim())
+    .map((part) => part.replace(/\s+/g, " ").trim())
     .filter((part) => part.length > 20);
-  return parts.length > 0 ? parts : [body];
+  return parts.length > 0 ? parts : [body.replace(/\s+/g, " ").trim()];
 }
 
 export function rankSources(
   question: string,
   sources: { title: string; body: string }[],
 ) {
-  const query = expand(tokens(question));
-  const docs: { title: string; text: string; words: string[] }[] = [];
+  const original = tokens(question);
+  const query = expand(original);
+  const docs: { title: string; text: string; words: Map<string, number>; wordSet: Set<string>; titleWords: Set<string> }[] = [];
   for (const source of sources) {
+    const titleWords = new Set(tokens(source.title));
     for (const text of passages(source.body)) {
-      docs.push({ title: source.title, text, words: tokens(text) });
+      const words = tokens(text);
+      docs.push({ title: source.title, text, words: counts(words), wordSet: new Set(words), titleWords });
     }
   }
-  if (query.length === 0 || docs.length === 0) return [] as Chunk[];
-  const avg = docs.reduce((sum, doc) => sum + doc.words.length, 0) / docs.length || 1;
+  if (query.length === 0 || docs.length === 0 || original.length === 0) return [] as Chunk[];
+  const avg = docs.reduce((sum, doc) => sum + [...doc.words.values()].reduce((inner, count) => inner + count, 0), 0) / docs.length || 1;
   const df = new Map<string, number>();
   for (const term of query) {
-    df.set(term, docs.filter((doc) => doc.words.includes(term)).length);
+    df.set(term, docs.filter((doc) => doc.wordSet.has(term) || doc.titleWords.has(term)).length);
   }
   const k = 1.2;
   const b = 0.75;
-  const chunks: Chunk[] = [];
+  const strong: Chunk[] = [];
+  const weak: Chunk[] = [];
   for (const doc of docs) {
+    const covered = covers(original, new Set([...doc.wordSet, ...doc.titleWords]));
+    if (covered === 0) continue;
+    const length = [...doc.words.values()].reduce((sum, count) => sum + count, 0) || 1;
     let score = 0;
     for (const term of query) {
-      const freq = doc.words.filter((word) => word === term).length;
-      if (!freq) continue;
+      const freq = doc.words.get(term) ?? 0;
       const seen = df.get(term) ?? 0;
       const idf = Math.log(1 + (docs.length - seen + 0.5) / (seen + 0.5));
-      const denom = freq + k * (1 - b + b * (doc.words.length / avg));
-      score += idf * ((freq * (k + 1)) / denom);
+      if (freq) {
+        const denom = freq + k * (1 - b + b * (length / avg));
+        score += idf * ((freq * (k + 1)) / denom);
+      }
+      if (doc.titleWords.has(term)) score += idf * 0.45;
     }
-    if (score > 0) chunks.push({ title: doc.title, text: doc.text, score });
+    score *= 1 + covered;
+    const chunk = { title: doc.title, text: doc.text, score, strong: original.length < 2 || covered >= Math.min(2, original.length) };
+    (chunk.strong ? strong : weak).push(chunk);
   }
-  return chunks.sort((a, b) => b.score - a.score).slice(0, 3);
+  strong.sort((a, b) => b.score - a.score);
+  weak.sort((a, b) => b.score - a.score);
+  if (strong.length > 0) return strong.slice(0, 3);
+  return weak.slice(0, 1);
 }
 
 export function extractEmail(message: string) {
   return message.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0] ?? null;
 }
 
-export function composeAnswer(_question: string, chunks: Chunk[]) {
-  if (chunks.length === 0) {
+function excerpt(text: string, question: string) {
+  const clean = text.replace(/\s+/g, " ").trim();
+  if (clean.length <= 420) return clean;
+  const lower = clean.toLowerCase();
+  let at = -1;
+  for (const term of tokens(question)) {
+    const found = lower.indexOf(term);
+    if (found >= 0 && (at < 0 || found < at)) at = found;
+  }
+  if (at < 0) return `${clean.slice(0, 420).trim()}…`;
+  const start = Math.max(0, at - 100);
+  const end = Math.min(clean.length, start + 420);
+  return `${start > 0 ? "…" : ""}${clean.slice(start, end).trim()}${end < clean.length ? "…" : ""}`;
+}
+
+export function composeAnswer(question: string, chunks: Chunk[]) {
+  const best = chunks.find((chunk) => chunk.strong);
+  if (!best) {
+    const closest = chunks[0];
     return {
       content:
         "I don't have that in the sources for this agent. Leave an email if you want a person to follow up.",
       citations: [] as string[],
       missed: true,
-      closestTitle: "",
-      closestText: "",
+      closestTitle: closest?.title ?? "",
+      closestText: closest ? excerpt(closest.text, question).slice(0, 400) : "",
     };
   }
-  const best = chunks[0];
-  const chosen = chunks.filter((chunk) => chunk.title === best.title).slice(0, 2);
+  const second = chunks.find(
+    (chunk) => chunk.strong && chunk !== best && chunk.title === best.title && chunk.score >= best.score * 0.6 && chunk.text !== best.text,
+  );
+  const parts = [excerpt(best.text, question)];
+  if (second) parts.push(excerpt(second.text, question));
   return {
-    content: `${chosen.map((chunk) => chunk.text).join(" ")}\n\nFrom ${best.title}.`,
+    content: `${parts.join(" ")}\n\nFrom ${best.title}.`,
     citations: [best.title],
     missed: false,
     closestTitle: best.title,
-    closestText: best.text,
+    closestText: excerpt(best.text, question).slice(0, 400),
   };
 }
 

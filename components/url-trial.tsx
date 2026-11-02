@@ -69,7 +69,7 @@ export function UrlTrial() {
       return;
     }
     if (pages.length >= TRIAL_PAGE_LIMIT) {
-      setError("Five pages is the trial limit. Keep the agent to add more in the desk.");
+      setError("This trial keeps 24 pages. Keep the agent to add more in the desk.");
       return;
     }
     setLoading(true);
@@ -84,20 +84,37 @@ export function UrlTrial() {
       setError(body.error || "That page could not be read.");
       return;
     }
-    const next = { title: body.title, text: body.text, url: body.url };
-    if (pages.some((page) => page.url === body.url)) {
+    const incoming = Array.isArray(body.pages) && body.pages.length > 0
+      ? body.pages
+      : [{ title: body.title, text: body.text, url: body.url }];
+    const fresh = incoming.filter(
+      (page: TrialPage) => page?.url && page?.text && !pages.some((current) => current.url === page.url),
+    );
+    if (fresh.length === 0) {
       setError("That page is already in this trial.");
       return;
     }
-    const nextPages = [...pages, next];
+    const room = TRIAL_PAGE_LIMIT - pages.length;
+    const accepted = fresh.slice(0, room).map((page: TrialPage) => ({
+      title: page.title,
+      text: page.text,
+      url: page.url,
+    }));
+    const nextPages = [...pages, ...accepted];
     setPages(nextPages);
     setUrl("");
     setOpen(true);
+    const line = body.crawled
+      ? `Read ${accepted.length} page${accepted.length === 1 ? "" : "s"} from this site.`
+      : `Added “${accepted[0].title}”. Ask again if the last answer was missing.`;
     setMessages((current) =>
       current.length === 0
-        ? [{ role: "assistant", content: welcome }]
-        : [...current, { role: "assistant", content: `Added “${next.title}”. Ask again if the last answer was missing.` }],
+        ? [{ role: "assistant", content: welcome }, { role: "assistant", content: line }]
+        : [...current, { role: "assistant", content: line }],
     );
+    if (fresh.length > room) {
+      setNotice("This trial keeps 24 pages. The rest of the site was left out.");
+    }
   }
 
   async function ask(event: React.FormEvent) {
@@ -124,8 +141,12 @@ export function UrlTrial() {
       return;
     }
     setMessages((current) => [...current, { role: "assistant", content: body.content }]);
-    if (body.missed && pages.length < TRIAL_PAGE_LIMIT) {
-      setNotice("That was not on the pages you added. Add the page that has the answer.");
+    if (body.missed) {
+      setNotice(
+        pages.length > 1
+          ? "That was not in the pages read from this site."
+          : "That was not on this page. Add the homepage to read the rest of the site, or paste the page that has the answer.",
+      );
     }
   }
 
@@ -161,9 +182,9 @@ export function UrlTrial() {
   return (
     <div id="trial" className="grid items-start gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
       <div>
-        <h2>Try your pages.</h2>
+        <h2>Try your site.</h2>
         <p className="mt-3 text-muted-foreground">
-          Start with one public page. If the answer is missing, add the page that has it. This is still a trial, not a crawl of the whole site.
+          Paste a homepage and this trial reads that site, up to 24 pages. Paste any other page to add just that page. Answers quote the page they came from.
         </p>
         <form onSubmit={loadPage} className="mt-6 flex flex-col gap-3 sm:flex-row">
           <Label htmlFor="trial-url" className="sr-only">Page URL</Label>
@@ -171,16 +192,16 @@ export function UrlTrial() {
             id="trial-url"
             type="url"
             required
-            placeholder={pages.length === 0 ? "https://example.com/pricing" : "https://example.com/shipping"}
+            placeholder={pages.length === 0 ? "https://example.com" : "https://example.com/shipping"}
             value={url}
             onChange={(event) => setUrl(event.target.value)}
           />
           <Button type="submit" disabled={loading || pages.length >= TRIAL_PAGE_LIMIT}>
-            {loading ? "Reading…" : pages.length === 0 ? "Read page" : "Add page"}
+            {loading ? "Reading…" : pages.length === 0 ? "Read site" : "Add page"}
           </Button>
         </form>
         {pages.length > 0 ? (
-          <ul className="mt-4 space-y-2">
+          <ul className="mt-4 max-h-48 space-y-2 overflow-y-auto">
             {pages.map((page) => (
               <li key={page.url} className="flex items-start justify-between gap-3 text-sm">
                 <span>Read “{page.title}”.</span>

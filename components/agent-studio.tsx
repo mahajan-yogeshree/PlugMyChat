@@ -89,7 +89,7 @@ export function AgentStudio({ agentId }: { agentId: string }) {
       setError(body.error || "Could not add the source.");
       return;
     }
-    setNotice("Source added.");
+    setNotice(Array.isArray(body.sources) && body.sources.length > 1 ? `Added ${body.sources.length} pages from that site.` : "Source added.");
     event.currentTarget.reset();
     await load();
   }

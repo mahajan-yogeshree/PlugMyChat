@@ -5,7 +5,7 @@ PlugMyChat is a local customer-support agent. It was rebuilt from the public beh
 - Marketing pages for home, pricing, integrations, use cases, agencies, help, installation, and a short blog
 - Email sign-in that creates an account when the address is new
 - Agents trained on pasted text, text files, or one public page
-- A homepage trial that starts with one public page and accepts another when the answer is missing, plus a one-line website widget that sends the page the visitor is on
+- A homepage trial that reads the site behind that URL, quotes the page that answered, and a one-line website widget that sends the page the visitor is on
 - Inbox, leads, and a list of questions the bot could not answer
 - Lead capture when a visitor types an email
 - The published plan ladder (Starter $9, Hobby $19, Standard $99, Business $399), applied only inside this workspace

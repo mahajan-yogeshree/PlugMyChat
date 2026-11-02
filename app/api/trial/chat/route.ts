@@ -15,7 +15,7 @@ export async function POST(request: Request) {
   const incoming = Array.isArray(body?.sources) && body.sources.length > 0
     ? body.sources
     : [{ title: body?.title, text: body?.text }];
-  const sources = incoming.slice(0, 5).map((source) => ({
+  const sources = incoming.slice(0, 24).map((source) => ({
     title: source.title?.trim().slice(0, 120) || "This page",
     body: source.text?.trim().slice(0, 20000) || "",
   })).filter((source) => source.body.length >= 20);

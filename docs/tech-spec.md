@@ -53,9 +53,9 @@ Cookie name: `cwt_session`. Flags: `httpOnly`, `sameSite: lax`, `path: /`, `maxA
 
 ## Retrieval
 
-`rankSources` lowercases the question, keeps tokens longer than 2 characters, drops a small stop list, and stems a trailing `ing`, `ed`, `es`, or `s`. A short related-word list expands refund to return, shipping to delivery, and a few other support pairs. Each source body is split on blank lines and sentence boundaries. Passages score with BM25 (`k` 1.2, `b` 0.75). Passages with score 0 are dropped. The top 3 are kept.
+`rankSources` lowercases the question, keeps tokens longer than 2 characters, drops a small stop list, and stems a trailing `ing`, `ed`, `es`, or `s`. A short related-word list expands refund to return, shipping to delivery, password to login, and a few other support pairs. Each source body is split on blank lines and sentence boundaries. Passages score with BM25 (`k` 1.2, `b` 0.75), plus a bonus when the page title contains a query term, then multiplied by how many question terms the passage covers. A passage that covers none of the question terms is dropped. With two or more question terms, a passage is a real answer only when it covers at least two. Otherwise the best thin match is returned as a weak chunk.
 
-`composeAnswer` keeps only pieces whose title matches the highest-scoring piece, at most two sentences. The reply ends with `From {title}.` If nothing scored, `missed` is true and the reply says the sources do not contain the answer and asks for an email. A miss stores `closestTitle` and `closestText` from that result, which are empty when every passage scored zero.
+`composeAnswer` quotes the best strong passage, and a second from the same title when its score is at least 60% of the best. Each quote is cut to about 420 characters around the matching words. The reply ends with `From {title}.` If there is no strong passage, `missed` is true. The reply says the sources do not contain the answer and asks for an email. `closestTitle` and `closestText` come from the weak chunk when one exists.
 
 The agent `instructions` string is not an input to `composeAnswer`.
 
@@ -78,18 +78,19 @@ The widget and the homepage panel do not send a session cookie requirement. Anyo
 
 `POST /api/agents/{id}/sources` requires a session and ownership.
 
-- `kind` `url` calls `readPublicPage`. Other kinds use `text`.
+- `kind` `url` with a paragraph of `text` stores that snapshot and the URL. Without `text`, `readSite` runs. A homepage becomes one source per page. Any other URL becomes one source.
 - Body must be at least 20 characters. Stored body is sliced to 20,000. Title is sliced to 120 characters.
-- The sum of source body lengths across the user’s agents, plus the new text, must be within `plan.characters`.
+- The sum of source body lengths across the user’s agents, plus the new text, must be within `plan.characters`. A site that would pass the cap stores pages until the cap and then stops.
 
-`readPublicPage`:
+`readPublicPage` and `readSite`:
 
-- Allows only `http:` and `https:`.
-- Rejects `localhost`, `0.0.0.0`, loopback, RFC1918, link-local, and `*.local`.
-- `redirect: "manual"`. Status 300–399 is an error.
-- Timeout 8 seconds. User-Agent `PlugMyChat/1.0`.
+- Allow only `http:` and `https:`.
+- Reject `localhost`, `0.0.0.0`, loopback, RFC1918, link-local, and `*.local`, including on each redirect hop.
+- Follow at most three redirects. Each hop must stay on a public http or https URL.
+- Timeout 8 seconds per page. User-Agent `PlugMyChat/1.0`.
 - YouTube hosts return a short pointer and do not fetch a transcript.
-- HTML is stripped of script and style, tags removed, then sliced to 20,000 characters. Fewer than 40 characters of text is an error.
+- HTML drops script, style, nav, footer, and forms. Text is taken from `main` or `article` when those tags exist, then sliced to 20,000 characters. Fewer than 40 characters of text is an error.
+- A homepage, or a final URL whose path is `/`, collects same-host links. `robots.txt` disallow rules for `PlugMyChat` or `*` are skipped. The crawl stops at 24 pages or about 20 seconds. Lines repeated on most pages are dropped when at least four pages were read. A page heading is used as the title when it differs from the site name. Shared titles get the URL path so a citation names the page.
 
 `DELETE /api/agents/{id}/sources/{sourceId}` removes one source owned by the session user.
 
@@ -111,9 +112,9 @@ The script reads `data-agent` and the script URL’s origin. It appends a button
 
 ## Trial and misses
 
-`POST /api/trial` with `{ url }` reads one public page and returns `{ title, text, url }`. It does not write the store.
+`POST /api/trial` with `{ url }` calls `readSite` and returns `{ title, text, url, crawled, pages }`. `pages` holds every page that was read. It does not write the store.
 
-`POST /api/trial/chat` with `{ question, sources: [{ title, text }] }` ranks those pages and returns the composed reply. A single `{ title, text, question }` body still works. It does not write the store and does not spend a credit. Each `text` is sliced to 20,000 characters, and at most five sources are ranked. The homepage trial stores the pages in `sessionStorage` under `plugmychat-trial`. Keep this agent creates the agent and adds each URL as a source. Signed-out visitors are sent to `/sign-in` with `saveAfterSignIn` set, and a successful sign-in finishes the save.
+`POST /api/trial/chat` with `{ question, sources: [{ title, text }] }` ranks those pages and returns the composed reply. A single `{ title, text, question }` body still works. It does not write the store and does not spend a credit. Each `text` is sliced to 20,000 characters, and at most 24 sources are ranked. The homepage trial stores the pages in `sessionStorage` under `plugmychat-trial`. Keep this agent creates the agent and stores each page’s text with its URL. Signed-out visitors are sent to `/sign-in` with `saveAfterSignIn` set, and a successful sign-in finishes the save.
 
 `GET /api/misses` requires a session and returns misses for the user’s agents, newest first, with the agent name.
 
@@ -163,5 +164,5 @@ Open `http://127.0.0.1:43123`. Workspace data is `data/store.json` and is not co
 - Retrieval is BM25 plus a small related-word list. A paraphrase outside that list still misses.
 - The credit check and the chat write share one `updateDatabase` call, so a failed check does not append messages. A crash during the rename can leave the previous file, because the write uses a temp file and `rename`.
 - The widget launcher uses the agent accent. The panel uses Dose tokens plus that accent on the top border.
-- The homepage trial holds at most five pages. It does not follow links or crawl a domain.
+- A homepage crawl stays on that site, stops at 24 pages, and does not log in, submit forms, or run JavaScript.
 - There is no automated test suite in the repo. Checks so far are typecheck, Hallmark lint on the homepage, and manual API calls.
