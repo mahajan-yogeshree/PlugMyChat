@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { cleanPageUrl, composeAnswer, extractEmail, rankSources } from "@/lib/answer";
+import { cleanPageUrl, extractEmail } from "@/lib/answer";
+import { answerFromSources } from "@/lib/grounded";
 import { getPlan } from "@/lib/plans";
 import { createId, updateDatabase } from "@/lib/store";
 import type { Conversation } from "@/lib/types";
@@ -17,27 +18,45 @@ export async function POST(request: Request) {
   if (!body?.agentId || message.length < 1 || message.length > 2000) {
     return NextResponse.json({ error: "Send a message to an agent." }, { status: 400 });
   }
+  const pageUrl = cleanPageUrl(body.pageUrl);
   try {
+    const prepared = await updateDatabase((db) => {
+      const agent = db.agents.find((item) => item.id === body.agentId);
+      if (!agent) return { error: "This agent is not available.", status: 404 as const };
+      const owner = db.users.find((item) => item.id === agent.userId);
+      const plan = getPlan(owner?.plan ?? "starter");
+      const month = new Date().toISOString().slice(0, 7);
+      const ids = new Set(db.agents.filter((item) => item.userId === agent.userId).map((item) => item.id));
+      const used = db.conversations
+        .filter((conversation) => ids.has(conversation.agentId))
+        .flatMap((conversation) => conversation.messages)
+        .filter((item) => item.role === "assistant" && item.createdAt.slice(0, 7) === month).length;
+      if (used >= plan.credits) {
+        return { error: "This workspace has used its message credits for the month.", status: 400 as const };
+      }
+      return {
+        sources: agent.sources.map((source) => ({ title: source.title, body: source.body, origin: source.origin })),
+      };
+    });
+    if ("error" in prepared) {
+      return NextResponse.json({ error: prepared.error }, { status: prepared.status });
+    }
+    const answer = await answerFromSources(message, prepared.sources, pageUrl);
     const result = await updateDatabase((db) => {
       const agent = db.agents.find((item) => item.id === body.agentId);
       if (!agent) throw new Error("This agent is not available.");
       const owner = db.users.find((item) => item.id === agent.userId);
       const plan = getPlan(owner?.plan ?? "starter");
       const month = new Date().toISOString().slice(0, 7);
-      const ids = new Set(
-        db.agents.filter((item) => item.userId === agent.userId).map((item) => item.id),
-      );
+      const ids = new Set(db.agents.filter((item) => item.userId === agent.userId).map((item) => item.id));
       const used = db.conversations
         .filter((conversation) => ids.has(conversation.agentId))
         .flatMap((conversation) => conversation.messages)
-        .filter((item) => item.role === "assistant" && item.createdAt.slice(0, 7) === month)
-        .length;
+        .filter((item) => item.role === "assistant" && item.createdAt.slice(0, 7) === month).length;
       if (used >= plan.credits) {
         throw new Error("This workspace has used its message credits for the month.");
       }
-      let conversation = db.conversations.find(
-        (item) => item.id === body.conversationId && item.agentId === agent.id,
-      );
+      let conversation = db.conversations.find((item) => item.id === body.conversationId && item.agentId === agent.id);
       if (!conversation) {
         conversation = {
           id: createId("cnv"),
@@ -49,7 +68,6 @@ export async function POST(request: Request) {
         db.conversations.push(conversation);
       }
       const now = new Date().toISOString();
-      const pageUrl = cleanPageUrl(body.pageUrl);
       conversation.messages.push({
         id: createId("msg"),
         role: "user",
@@ -61,9 +79,7 @@ export async function POST(request: Request) {
       const email = extractEmail(message);
       let leadSaved = false;
       if (email && agent.collectLeads) {
-        const exists = db.leads.some(
-          (lead) => lead.agentId === agent.id && lead.email.toLowerCase() === email.toLowerCase(),
-        );
+        const exists = db.leads.some((lead) => lead.agentId === agent.id && lead.email.toLowerCase() === email.toLowerCase());
         if (!exists) {
           db.leads.push({
             id: createId("led"),
@@ -76,8 +92,6 @@ export async function POST(request: Request) {
           leadSaved = true;
         }
       }
-      const ranked = rankSources(message, agent.sources);
-      const answer = composeAnswer(message, ranked);
       if (answer.missed) {
         const duplicate = db.misses.some(
           (miss) => miss.agentId === agent.id && miss.question === message && miss.pageUrl === pageUrl,
@@ -95,23 +109,17 @@ export async function POST(request: Request) {
           db.misses = db.misses.slice(-200);
         }
       }
-      if (leadSaved) {
-        answer.content = `Saved ${email}. ${answer.content}`;
-      }
+      const content = leadSaved ? `Saved ${email}. ${answer.content}` : answer.content;
       const reply = {
         id: createId("msg"),
         role: "assistant" as const,
-        content: answer.content,
+        content,
         citations: answer.citations,
         pageUrl: "",
         createdAt: new Date().toISOString(),
       };
       conversation.messages.push(reply);
-      return {
-        conversationId: conversation.id,
-        message: reply,
-        leadSaved,
-      };
+      return { conversationId: conversation.id, message: reply, leadSaved };
     });
     return NextResponse.json(result);
   } catch (error) {

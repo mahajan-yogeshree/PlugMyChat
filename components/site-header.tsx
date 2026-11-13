@@ -22,14 +22,14 @@ export function SiteHeader() {
         <Link href="/" className="font-display text-lg">
           PlugMyChat
         </Link>
-        <nav className="hidden items-center gap-5 text-sm md:flex">
+        <nav className="hidden min-w-0 flex-wrap items-center gap-x-5 gap-y-1 text-sm lg:flex">
           {links.map((link) => (
             <Link key={link.href} href={link.href} className="hover:underline">
               {link.label}
             </Link>
           ))}
         </nav>
-        <div className="hidden items-center gap-2 md:flex">
+        <div className="hidden items-center gap-2 lg:flex">
           <Link href="/sign-in" className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}>
             Sign in
           </Link>
@@ -37,12 +37,12 @@ export function SiteHeader() {
             Get started
           </Link>
         </div>
-        <Button variant="outline" size="sm" className="md:hidden" onClick={() => setOpen((value) => !value)}>
+        <Button variant="outline" size="sm" className="lg:hidden" onClick={() => setOpen((value) => !value)} aria-expanded={open}>
           Menu
         </Button>
       </div>
       {open ? (
-        <div className="page-wrap mt-2 flex flex-col gap-3 rounded-[14px] border bg-background py-4 text-sm md:hidden">
+        <div className="page-wrap mt-2 flex flex-col gap-3 rounded-[14px] border bg-background py-4 text-sm text-foreground lg:hidden">
           {links.map((link) => (
             <Link key={link.href} href={link.href} onClick={() => setOpen(false)}>
               {link.label}

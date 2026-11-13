@@ -30,7 +30,7 @@ export async function POST(
       }
       agent.sources.push({
         id: createId("src"),
-        title: (miss.closestTitle || "Added after a miss").slice(0, 120),
+        title: "Added after a miss",
         kind: "note",
         body: text.slice(0, 20000),
         createdAt: new Date().toISOString(),

@@ -14,7 +14,7 @@ import {
   type TrialPage,
 } from "@/lib/save-trial";
 
-type Bubble = { role: "user" | "assistant"; content: string };
+type Bubble = { role: "user" | "assistant"; content: string; citations?: string[] };
 
 const DEFAULT_WELCOME = "Ask about these pages. I only answer from what they say.";
 
@@ -131,7 +131,7 @@ export function UrlTrial() {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         question,
-        sources: pages.map((page) => ({ title: page.title, text: page.text })),
+        sources: pages.map((page) => ({ title: page.title, text: page.text, url: page.url })),
       }),
     });
     const body = await response.json();
@@ -140,7 +140,10 @@ export function UrlTrial() {
       setError(body.error || "The trial could not answer.");
       return;
     }
-    setMessages((current) => [...current, { role: "assistant", content: body.content }]);
+    setMessages((current) => [
+      ...current,
+      { role: "assistant", content: body.content, citations: body.citations || [] },
+    ]);
     if (body.missed) {
       setNotice(
         pages.length > 1
@@ -255,14 +258,17 @@ export function UrlTrial() {
             </div>
             <div ref={thread} className="flex-1 space-y-3 overflow-y-auto p-4">
               {messages.map((message, index) => (
-                <p key={`${message.role}-${index}`} className={`max-w-[90%] whitespace-pre-wrap px-3 py-2 text-sm ${message.role === "user" ? "ml-auto bg-ink text-paper" : "border-l border-rule"}`}>
+                <div key={`${message.role}-${index}`} className={`max-w-[90%] whitespace-pre-wrap break-words px-3 py-2 text-sm ${message.role === "user" ? "ml-auto bg-ink text-paper" : "border-l border-rule text-ink"}`}>
                   {message.content}
-                </p>
+                  {message.role === "assistant" && message.citations && message.citations.length > 0 ? (
+                    <span className="mt-2 block text-xs text-signal-deep">Source: {message.citations.join(", ")}</span>
+                  ) : null}
+                </div>
               ))}
               {messages.length === 0 ? <p className="text-sm text-muted-foreground">Read a page to start the trial.</p> : null}
             </div>
             <form onSubmit={ask} className="flex gap-2 border-t p-3">
-              <Input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Ask about these pages" aria-label="Question" disabled={pages.length === 0 || busy} />
+              <Input className="min-w-0" value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Ask about these pages" aria-label="Question" disabled={pages.length === 0 || busy} />
               <Button type="submit" disabled={pages.length === 0 || busy || !draft.trim()}>Send</Button>
             </form>
             <p className="border-t px-3 py-2 text-center text-[11px] text-muted-foreground">Powered by PlugMyChat</p>
