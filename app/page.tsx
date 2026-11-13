@@ -12,28 +12,40 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { faqs, integrations, useCases } from "@/lib/content";
+import { faqs, useCases } from "@/lib/content";
 import { DEMO_AGENT } from "@/lib/store";
 import { cn } from "cn";
 
-const problems = [
+const steps = [
   {
     n: "01",
-    title: "The same questions, again.",
-    body: "Shipping, pricing, returns. Let the agent answer from your content so the team can handle the work that needs them.",
-    tint: "var(--p-mon)",
+    title: "Paste a page",
+    body: "A homepage reads the site, up to 24 pages. Any other URL adds just that page.",
   },
   {
     n: "02",
-    title: "Interested, then gone.",
-    body: "A visitor has a question before they buy. Answer it while they are still on the page, and keep their email for follow-up.",
-    tint: "var(--p-wed)",
+    title: "Ask in the trial",
+    body: "The reply quotes or rephrases a saved passage and names the page it came from.",
   },
   {
     n: "03",
-    title: "Closed for the day.",
-    body: "Your customers are not. Give them a way to get answers after hours without asking the team to stay online.",
-    tint: "var(--p-fri)",
+    title: "Keep the agent",
+    body: "Sign in, then copy the script tag. The widget sends the page the visitor is on.",
+  },
+];
+
+const promises = [
+  {
+    title: "Named source",
+    body: "Every answer points at the page it used. The trial, the widget, and the inbox show that source.",
+  },
+  {
+    title: "No invented policy",
+    body: "Shipping dates, prices, and rules have to be written on a saved page. Otherwise the agent says it does not have that.",
+  },
+  {
+    title: "A miss you can fix",
+    body: "A question the pages do not contain is saved. Paste the missing paragraph and the same question cites that note.",
   },
 ];
 
@@ -43,24 +55,47 @@ export default function HomePage() {
       <SiteHeader />
       <main>
         <section className="hero-corridor">
-          <div className="hero-copy">
-            <h1>AI customer support that pays for itself.</h1>
-            <p className="lead">It answers from your pages and cites the source.</p>
-            <div className="hero-actions">
-              <Link href="#trial" className={cn(buttonVariants({ size: "lg" }))}>
-                Try your page
-              </Link>
-              <Link href="/pricing" className={cn(buttonVariants({ variant: "outline", size: "lg" }))}>
-                See pricing
-              </Link>
+          <div className="hero-grid">
+            <div className="hero-copy">
+              <p className="eyebrow">Support grounded in your pages</p>
+              <h1>Answers that stay on the page they came from.</h1>
+              <p className="lead">
+                Paste a site, ask a question, and keep the agent. A reply may quote or rephrase only a passage that was saved, and it names that page.
+              </p>
+              <div className="hero-actions">
+                <Link href="#trial" className={cn(buttonVariants({ size: "lg" }))}>
+                  Try your page
+                </Link>
+                <Link href="/pricing" className={cn(buttonVariants({ variant: "outline", size: "lg" }))}>
+                  See pricing
+                </Link>
+              </div>
             </div>
-            <aside className="dose-label">
-              <p className="dose text-xs text-muted-foreground">08:14</p>
-              <p>Order 4471 shipped this morning with UPS and should arrive Thursday.</p>
-              <p className="text-sm text-muted-foreground">From Shipping</p>
-              <span className="dose-stamp">Cited</span>
+            <aside className="hero-card" aria-label="Example cited answer">
+              <div className="hero-card-bar">
+                <span>Northwind Desk</span>
+                <span className="dose-stamp">Cited</span>
+              </div>
+              <p className="mock-user">Where is order 4471?</p>
+              <div className="mock-agent">
+                <p>Order 4471 shipped this morning with UPS and should arrive Thursday.</p>
+                <p className="source-line">Source: Shipping</p>
+              </div>
             </aside>
           </div>
+        </section>
+
+        <section className="page-wrap band">
+          <h2>Three steps, then the script tag.</h2>
+          <ol className="steps">
+            {steps.map((step) => (
+              <li key={step.n} className="step-card">
+                <p className="eyebrow">{step.n}</p>
+                <h3>{step.title}</h3>
+                <p>{step.body}</p>
+              </li>
+            ))}
+          </ol>
         </section>
 
         <section className="page-wrap band">
@@ -68,55 +103,39 @@ export default function HomePage() {
         </section>
 
         <section className="page-wrap band">
+          <h2>What the reply is allowed to do.</h2>
+          <div className="steps">
+            {promises.map((item) => (
+              <article key={item.title} className="step-card">
+                <h3>{item.title}</h3>
+                <p>{item.body}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="page-wrap band">
           <h2>Starter is $9 a month.</h2>
+          <p className="mt-3 max-w-2xl text-muted-foreground">
+            Prices match the public list. Changing a plan here updates this workspace only. It does not charge a card.
+          </p>
           <div className="mt-8">
             <PlanTable />
           </div>
         </section>
 
         <section className="page-wrap band">
-          <div className="stack">
-            <div className="stack-sticky">
-              <h2>Support should not take over the day.</h2>
-              <Link href="/sign-in" className={cn(buttonVariants(), "mt-6")}>
-                Get started
-              </Link>
-            </div>
-            <div className="grid gap-4">
-              {problems.map((problem) => (
-                <article key={problem.n} className="plastic p-6" style={{ ["--tint" as string]: problem.tint }}>
-                  <p className="dose text-sm">{problem.n}</p>
-                  <h3 className="mt-3">{problem.title}</h3>
-                  <p className="mt-2 text-sm">{problem.body}</p>
-                  <div className="dose-label mt-4">
-                    <p className="dose text-xs text-muted-foreground">{problem.n === "01" ? "08:14" : problem.n === "02" ? "18:30" : "21:40"}</p>
-                    <p className="text-sm">
-                      {problem.n === "01"
-                        ? "It left the warehouse this morning with UPS and is due Thursday."
-                        : problem.n === "02"
-                          ? "Yes. The 6:30 slot is open. What email should the confirmation use?"
-                          : "The clinic is open 9 to 1."}
-                    </p>
-                    <span className="dose-stamp">{problem.n === "01" ? "Cited" : "Example"}</span>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="page-wrap band">
           <div className="flex flex-wrap items-end justify-between gap-4">
-            <h2>From SaaS docs to a listing after hours.</h2>
-            <Link href="/use-cases" className="text-sm underline">
+            <h2>Where a grounded agent fits.</h2>
+            <Link href="/use-cases" className="text-sm text-foreground underline">
               All use cases
             </Link>
           </div>
-          <ul className="mt-8 divide-y border-y">
+          <ul className="use-grid">
             {useCases.slice(0, 6).map((item) => (
               <li key={item.slug}>
-                <Link href={`/use-cases/${item.slug}`} className="grid gap-2 py-4 sm:grid-cols-[12rem_minmax(0,1fr)]">
-                  <span className="font-medium">{item.title}</span>
+                <Link href={`/use-cases/${item.slug}`} className="use-card">
+                  <span className="font-medium text-foreground">{item.title}</span>
                   <span className="text-sm text-muted-foreground">{item.summary}</span>
                 </Link>
               </li>
@@ -125,32 +144,8 @@ export default function HomePage() {
         </section>
 
         <section className="page-wrap band">
-          <div className="stack">
-            <div className="stack-sticky">
-              <h2>WordPress, Shopify, and Slack.</h2>
-              <Link href="/integrations" className="mt-6 inline-block text-sm underline">
-                Review every integration
-              </Link>
-            </div>
-            <div className="grid gap-4">
-              {integrations.slice(0, 3).map((group) => (
-                <article key={group.group} className="rounded-[14px] border bg-paper p-6">
-                  <h3>{group.group}</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">{group.blurb}</p>
-                  <ul className="mt-4 space-y-1 text-sm">
-                    {group.items.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="page-wrap band max-w-3xl">
-          <h2>A little clarity. Then, let’s go.</h2>
-          <Accordion className="mt-6">
+          <h2>Questions, answered plainly.</h2>
+          <Accordion className="mt-6 max-w-3xl">
             {faqs.map((faq) => (
               <AccordionItem key={faq.q} value={faq.q}>
                 <AccordionTrigger>{faq.q}</AccordionTrigger>
@@ -161,9 +156,11 @@ export default function HomePage() {
         </section>
 
         <section className="page-wrap band grid items-start gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
-          <div className="lg:sticky lg:top-28">
+          <div className="min-w-0 lg:sticky lg:top-28">
             <h2>Ask the sample desk.</h2>
-            <p className="mt-3 text-muted-foreground">Northwind answers only from the notes stored on this machine. No model API key. Answers stay on this machine.</p>
+            <p className="mt-3 text-muted-foreground">
+              Northwind Desk answers from the notes saved for that agent. A reply names Shipping, returns, or the note you add. It does not invent a date or a price.
+            </p>
           </div>
           <ChatPanel agentId={DEMO_AGENT} sample />
         </section>
@@ -171,26 +168,36 @@ export default function HomePage() {
         <section className="page-wrap band">
           <h2>Install the widget</h2>
           <p className="mt-3 max-w-2xl text-muted-foreground">
-            After you create an agent, the Install tab shows a script for that agent. The shape is the same everywhere.
+            After you create an agent, the Install tab shows a script for that agent. Paste it before the closing body tag.
           </p>
-          <div className="mt-8 grid gap-4 md:grid-cols-3">
-            <article className="plastic p-5" style={{ ["--tint" as string]: "var(--p-tue)" }}>
+          <div className="steps">
+            <article className="step-card">
               <h3>Any HTML site</h3>
-              <p className="mt-2 text-sm">Paste the script tag before the closing body tag.</p>
+              <p>Paste the script tag before the closing body tag.</p>
             </article>
-            <article className="plastic p-5" style={{ ["--tint" as string]: "var(--p-thu)" }}>
+            <article className="step-card">
               <h3>Shopify</h3>
-              <p className="mt-2 text-sm">Online store, Themes, Edit code, then theme.liquid before the closing body tag.</p>
+              <p>Online store, Themes, Edit code, then theme.liquid before the closing body tag.</p>
             </article>
-            <article className="plastic p-5" style={{ ["--tint" as string]: "var(--p-sat)" }}>
+            <article className="step-card">
               <h3>Webflow</h3>
-              <p className="mt-2 text-sm">Site settings, then custom code, then the footer.</p>
+              <p>Site settings, then custom code, then the footer.</p>
             </article>
           </div>
-          <pre className="dose mt-6 overflow-x-auto rounded-[14px] bg-ink p-4 text-sm text-paper">{`<script src="https://your-host/widget.js" data-agent="agt_..."></script>`}</pre>
+          <pre className="install-snippet">{`<script src="https://your-host/widget.js" data-agent="agt_..."></script>`}</pre>
           <Link href="/installation" className={cn(buttonVariants(), "mt-6")}>
             Installation notes
           </Link>
+        </section>
+
+        <section className="band-ink">
+          <div className="page-wrap closing">
+            <h2>Put the agent on the page you already have.</h2>
+            <p>Read a site in the trial. Keep it when the answers cite the right page.</p>
+            <Link href="#trial" className={cn(buttonVariants({ size: "lg" }))}>
+              Try your page
+            </Link>
+          </div>
         </section>
       </main>
       <SiteFooter />

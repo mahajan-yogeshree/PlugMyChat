@@ -1,12 +1,12 @@
 # PlugMyChat product requirements
 
-Status: local product, 1 November 2026. This document describes the product that is running in this repository. It does not describe a hosted billing service or a connected language model.
+Status: local product, 13 November 2026. This document describes the product that is running in this repository. It does not describe a hosted billing service. Answers call the xAI API when `XAI_API_KEY` is set, and they stay limited to retrieved passages.
 
 ## Summary
 
 PlugMyChat lets a business put a support agent on its website. The owner adds the pages, notes, and text files the team already has. Visitors ask questions. The agent answers from that material, names the source, and saves an email when someone wants a person.
 
-Answers stay on the machine that runs the app. They are not sent to a hosted model.
+Retrieval stays on the machine that runs the app. When `XAI_API_KEY` is set, the question and the retrieved passages are sent to the xAI API so the reply can quote or rephrase them. The model names the source page. If the key is missing, the agent says the model is unavailable and does not invent an answer. If the pages do not contain the answer, the miss line is unchanged.
 
 ## Problem
 
@@ -31,7 +31,7 @@ Decided 1 November 2026. A single URL cannot build a finished bot. The first thi
 
 1. **URL trial on our site.** The homepage takes one public `http` or `https` URL, reads that page, and opens a chat against it. The reply cites a sentence from that page, or says the page does not contain the answer. The screen says this starts with one page. Northwind stays available as a sample.
 2. **The trial uses their widget.** Name, welcome line, accent color, and launcher label update the preview as they type. The same settings are what the embed and the install script use. The launcher is no longer a fixed indigo button.
-3. **A match that finds the paragraph.** Retrieval ranks passages with BM25, a light stem, and a short list of related words (refund and return, shipping and delivery). It still runs on this machine. The reply is a sentence from the page, or a miss. No hosted model.
+3. **A match that finds the paragraph.** Retrieval ranks passages with BM25, a light stem, and a short list of related words (refund and return, shipping and delivery). It still runs on this machine, and the visitor’s page ranks first when the widget sends `pageUrl`. A strong passage is sent to the xAI API, which may quote or rephrase only that text and must name the page. A miss stays a miss and is not sent to the model.
 4. **The bot didn’t know.** A miss is saved with the question, the page URL, and the closest source. The owner opens that list, pastes the missing paragraph, and the question leaves the list. The paragraph becomes a note source, still inside the plan’s character cap.
 5. **The page the visitor is on.** The install stays one script tag. The widget already sits on the page, so it passes `window.location.href` with the question. Inbox and the miss list show that URL.
 

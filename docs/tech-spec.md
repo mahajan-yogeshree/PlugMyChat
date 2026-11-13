@@ -6,7 +6,7 @@ Status: local Next.js app, 1 November 2026. This is the specification of the cod
 
 - Next.js 15.5 App Router, React 19, TypeScript.
 - Tailwind CSS v4 and shadcn/ui (base-ui). The Dose theme maps onto those tokens in `app/globals.css`, `app/tokens.css`, and `app/base.css`.
-- No database server and no hosted model. State is one JSON file.
+- No database server. State is one JSON file. Answers call the xAI API when `XAI_API_KEY` is set (`lib/model.ts`). The key is read from the environment and is never written into the repo.
 - Dev server: `next dev --turbopack -H 0.0.0.0 -p 43123`.
 
 ## Layout
@@ -55,7 +55,11 @@ Cookie name: `cwt_session`. Flags: `httpOnly`, `sameSite: lax`, `path: /`, `maxA
 
 `rankSources` lowercases the question, keeps tokens longer than 2 characters, drops a small stop list, and stems a trailing `ing`, `ed`, `es`, or `s`. A short related-word list expands refund to return, shipping to delivery, password to login, and a few other support pairs. Each source body is split on blank lines and sentence boundaries. Passages score with BM25 (`k` 1.2, `b` 0.75), plus a bonus when the page title contains a query term, then multiplied by how many question terms the passage covers. A passage that covers none of the question terms is dropped. With two or more question terms, a passage is a real answer only when it covers at least two. Otherwise the best thin match is returned as a weak chunk.
 
+`rankSources` takes an optional `preferUrl`. A passage whose source origin is that page (host without a leading `www`, path without a trailing slash, query kept, hash dropped) has its score multiplied by 4, so the visitor’s page ranks first when it also covers the question.
+
 `composeAnswer` quotes the best strong passage, and a second from the same title when its score is at least 60% of the best. Each quote is cut to about 420 characters around the matching words. The reply ends with `From {title}.` If there is no strong passage, `missed` is true. The reply says the sources do not contain the answer and asks for an email. `closestTitle` and `closestText` come from the weak chunk when one exists.
+
+`answerFromSources` keeps that miss. When a strong passage exists it calls `rephraseGrounded`. The model may quote or rephrase only those passages and must name one of their titles. Numbers, weekdays, all-caps tokens, and prices in the reply have to appear in that passage, and enough of the reply’s words have to appear there too. A reply that fails those checks is discarded. If `XAI_API_KEY` is unset, the request fails, or the reply is discarded, the response starts with “The model is unavailable.” and then the saved quotation. It does not invent a fact.
 
 The agent `instructions` string is not an input to `composeAnswer`.
 
@@ -118,7 +122,7 @@ The script reads `data-agent` and the script URL’s origin. It appends a button
 
 `GET /api/misses` requires a session and returns misses for the user’s agents, newest first, with the agent name.
 
-`POST /api/misses/{id}` with `{ text }` of at least 20 characters adds a note source titled with the closest source, or “Added after a miss”, then deletes the miss. The plan character cap still applies.
+`POST /api/misses/{id}` with `{ text }` of at least 20 characters adds a note source titled “Added after a miss”, then deletes the miss. The plan character cap still applies. Asking the same question again quotes that note and names it.
 
 ## Other routes
 

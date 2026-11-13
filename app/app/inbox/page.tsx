@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-type Message = { role: string; content: string; pageUrl?: string };
+type Message = { role: string; content: string; pageUrl?: string; citations?: string[] };
 type Conversation = {
   id: string;
   agentName: string;
@@ -52,7 +52,10 @@ export default function InboxPage() {
                   <p key={index} className="whitespace-pre-wrap">
                     <span className="font-medium">{message.role === "user" ? "Visitor" : "Agent"}: </span>
                     {message.content}
-                    {message.role === "user" && message.pageUrl ? <span className="mt-1 block text-muted-foreground">{message.pageUrl}</span> : null}
+                    {message.role === "user" && message.pageUrl ? <span className="mt-1 block break-all text-muted-foreground">{message.pageUrl}</span> : null}
+                    {message.role === "assistant" && message.citations && message.citations.length > 0 ? (
+                      <span className="mt-1 block text-muted-foreground">Source: {message.citations.join(", ")}</span>
+                    ) : null}
                   </p>
                 ))}
               </div>

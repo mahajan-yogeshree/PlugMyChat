@@ -15,7 +15,7 @@ type PublicAgent = {
   showBadge: boolean;
 };
 
-type Bubble = { role: "user" | "assistant"; content: string };
+type Bubble = { role: "user" | "assistant"; content: string; citations?: string[]; pageUrl?: string };
 
 export function ChatPanel({
   agentId,
@@ -53,6 +53,7 @@ export function ChatPanel({
                   {
                     role: "assistant",
                     content: "Order 4471 shipped this morning with UPS and should arrive Thursday. Orders placed before 2pm ship the same weekday.\n\nFrom Shipping.",
+                    citations: ["Shipping"],
                   },
                 ]
               : [welcome],
@@ -77,7 +78,7 @@ export function ChatPanel({
     setDraft("");
     setBusy(true);
     setError("");
-    setMessages((current) => [...current, { role: "user", content: message }]);
+    setMessages((current) => [...current, { role: "user", content: message, pageUrl }]);
     try {
       const response = await fetch("/api/chat", {
         method: "POST",
@@ -87,7 +88,10 @@ export function ChatPanel({
       const body = await response.json();
       if (!response.ok) throw new Error(body.error || "The agent could not answer.");
       setConversationId(body.conversationId);
-      setMessages((current) => [...current, { role: "assistant", content: body.message.content }]);
+      setMessages((current) => [
+        ...current,
+        { role: "assistant", content: body.message.content, citations: body.message.citations || [] },
+      ]);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "The agent could not answer.");
     } finally {
@@ -109,11 +113,17 @@ export function ChatPanel({
         {messages.map((message, index) => (
           <div
             key={`${message.role}-${index}`}
-            className={`max-w-[85%] px-3 py-2 text-sm whitespace-pre-wrap ${
-              message.role === "user" ? "ml-auto bg-ink text-paper" : "border-l border-rule"
+            className={`max-w-[85%] break-words px-3 py-2 text-sm whitespace-pre-wrap ${
+              message.role === "user" ? "ml-auto bg-ink text-paper" : "border-l border-rule text-ink"
             }`}
           >
             {message.content}
+            {message.role === "user" && message.pageUrl ? (
+              <span className="mt-1 block break-all text-xs opacity-80">{message.pageUrl}</span>
+            ) : null}
+            {message.role === "assistant" && message.citations && message.citations.length > 0 ? (
+              <span className="mt-2 block text-xs text-signal-deep">Source: {message.citations.join(", ")}</span>
+            ) : null}
           </div>
         ))}
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
@@ -124,6 +134,7 @@ export function ChatPanel({
           onChange={(event) => setDraft(event.target.value)}
           placeholder="Ask a question"
           aria-label="Message"
+          className="min-w-0"
           disabled={loading || busy}
         />
         <Button type="submit" disabled={loading || busy || !draft.trim()}>

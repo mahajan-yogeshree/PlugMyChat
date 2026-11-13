@@ -37,11 +37,9 @@ export function SiteFooter() {
     <footer className="border-t">
       <div className="page-wrap py-16">
         <p className="font-display text-lg">PlugMyChat</p>
-        <p className="mt-4 max-w-[18ch] font-display text-section leading-none">
-          Answers come from the pages you give it.
-        </p>
+        <p className="footer-claim">Answers come from the pages you give it.</p>
         <p className="mt-4 max-w-xl text-sm text-muted-foreground">
-          AI customer support trained on your business. This copy runs locally and answers only from sources stored on this machine.
+          Replies quote or rephrase a passage saved from those pages and name the page. A hosted model does that when an API key is set. If the pages do not contain the answer, the agent says so.
         </p>
         <div className="mt-10 grid gap-8 sm:grid-cols-3">
           {columns.map((column) => (

@@ -1,4 +1,18 @@
-export type Chunk = { title: string; text: string; score: number; strong: boolean };
+export type Chunk = { title: string; text: string; score: number; strong: boolean; origin: string };
+
+export const MISS_LINE =
+  "I don't have that in the sources for this agent. Leave an email if you want a person to follow up.";
+
+export function pageKey(value: string) {
+  try {
+    const url = new URL(value.trim());
+    url.hash = "";
+    const path = url.pathname.replace(/\/+$/, "") || "/";
+    return `${url.hostname.replace(/^www\./i, "").toLowerCase()}${path}${url.search}`;
+  } catch {
+    return "";
+  }
+}
 
 const STOP = new Set([
   "the", "and", "for", "you", "your", "with", "this", "that", "from", "have",
@@ -67,25 +81,29 @@ function counts(words: string[]) {
 }
 
 function passages(body: string) {
-  const parts = body
-    .split(/\n+|(?<=[.!?])\s+/)
+  const normalized = body.replace(/\s*\n+\s*/g, " ").replace(/[ \t]{2,}/g, " ").trim();
+  const parts = normalized
+    .split(/(?<=[.!?])\s+/)
     .map((part) => part.replace(/\s+/g, " ").trim())
     .filter((part) => part.length > 20);
-  return parts.length > 0 ? parts : [body.replace(/\s+/g, " ").trim()];
+  return parts.length > 0 ? parts : [normalized];
 }
 
 export function rankSources(
   question: string,
-  sources: { title: string; body: string }[],
+  sources: { title: string; body: string; origin?: string }[],
+  preferUrl = "",
 ) {
   const original = tokens(question);
   const query = expand(original);
-  const docs: { title: string; text: string; words: Map<string, number>; wordSet: Set<string>; titleWords: Set<string> }[] = [];
+  const preferred = pageKey(preferUrl);
+  const docs: { title: string; text: string; origin: string; words: Map<string, number>; wordSet: Set<string>; titleWords: Set<string> }[] = [];
   for (const source of sources) {
     const titleWords = new Set(tokens(source.title));
+    const origin = source.origin || "";
     for (const text of passages(source.body)) {
       const words = tokens(text);
-      docs.push({ title: source.title, text, words: counts(words), wordSet: new Set(words), titleWords });
+      docs.push({ title: source.title, text, origin, words: counts(words), wordSet: new Set(words), titleWords });
     }
   }
   if (query.length === 0 || docs.length === 0 || original.length === 0) return [] as Chunk[];
@@ -114,7 +132,9 @@ export function rankSources(
       if (doc.titleWords.has(term)) score += idf * 0.45;
     }
     score *= 1 + covered;
-    const chunk = { title: doc.title, text: doc.text, score, strong: original.length < 2 || covered >= Math.min(2, original.length) };
+    const onPage = preferred !== "" && pageKey(doc.origin) === preferred;
+    if (onPage) score *= 4;
+    const chunk = { title: doc.title, text: doc.text, origin: doc.origin, score, strong: original.length < 2 || covered >= Math.min(2, original.length) };
     (chunk.strong ? strong : weak).push(chunk);
   }
   strong.sort((a, b) => b.score - a.score);
@@ -147,8 +167,7 @@ export function composeAnswer(question: string, chunks: Chunk[]) {
   if (!best) {
     const closest = chunks[0];
     return {
-      content:
-        "I don't have that in the sources for this agent. Leave an email if you want a person to follow up.",
+      content: MISS_LINE,
       citations: [] as string[],
       missed: true,
       closestTitle: closest?.title ?? "",

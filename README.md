@@ -10,7 +10,7 @@ PlugMyChat is a local customer-support agent. It was rebuilt from the public beh
 - Lead capture when a visitor types an email
 - The published plan ladder (Starter $9, Hobby $19, Standard $99, Business $399), applied only inside this workspace
 
-Answers are chosen from the sources you stored. They are not sent to a hosted model. Google sign-in, card checkout, and messaging apps (Slack, WhatsApp, Telegram) are shown as part of the product map and are not connected.
+Answers are grounded in the pages you stored. When `XAI_API_KEY` is set, a question and the retrieved passages are sent to the xAI API (`https://api.x.ai/v1/chat/completions`, model `grok-4.7` unless `XAI_MODEL` is set). The model may quote or rephrase only that text and must name the page. If the key is missing or the call fails, the agent says the model is unavailable and shows the saved passage instead of inventing an answer. If the pages do not contain the answer, it uses the miss line. Google sign-in, card checkout, and messaging apps (Slack, WhatsApp, Telegram) are shown as part of the product map and are not connected.
 
 ## Run it
 

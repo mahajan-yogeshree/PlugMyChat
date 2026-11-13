@@ -98,8 +98,8 @@ export const faqs = [
     a: "Paste help text, upload a text file, or save a public page. The agent answers from that material and names the source.",
   },
   {
-    q: "Do I need an OpenAI API key?",
-    a: "No. This local rebuild answers by searching the sources you added. It does not call a hosted model.",
+    q: "Does an answer come from a hosted model?",
+    a: "Yes, when XAI_API_KEY is set. The model may only quote or rephrase a passage retrieved from the pages you saved, and it names that page. If the key is missing, the agent says the model is unavailable and does not invent an answer. If the pages do not contain the answer, it says so.",
   },
   {
     q: "Can it collect leads and take actions?",
